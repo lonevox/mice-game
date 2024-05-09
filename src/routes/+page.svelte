@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Rarities, type Resource, resourceDefaults } from '$lib';
+	import { Rarities, type Resource, resourceDefaults } from '$lib/resource';
 
 	const resources = $state<Resource[]>([])
 	resources.push({
