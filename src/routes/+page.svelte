@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Rarities, type Resource, resourceDefaults } from '$lib/resource';
+	import { Tab, TabGroup } from '@skeletonlabs/skeleton';
+	import LocationTab from '$lib/components/LocationTab.svelte';
 
 	const resources = $state<Resource[]>([])
 	resources.push({
@@ -25,6 +27,8 @@
 		}
 		return "";
 	}
+
+	let tabSet = $state<number>(0);
 </script>
 
 <div class="flex flex-row max-w-screen-2xl mx-auto space-x-8">
@@ -42,7 +46,17 @@
 		</div>
 	</div>
 	<div class="basis-1/2">
-		<h4 class="h4">Main Content</h4>
+		<TabGroup>
+			<Tab bind:group={tabSet} name="tab1" value={0} class="font-bold">Field</Tab>
+			<Tab bind:group={tabSet} name="tab2" value={1} class="font-bold">Society</Tab>
+			<svelte:fragment slot="panel">
+				{#if tabSet === 0}
+					<LocationTab />
+				{:else if tabSet === 1}
+					(tab panel 2 contents)
+				{/if}
+			</svelte:fragment>
+		</TabGroup>
 	</div>
 	<div class="basis-1/4">
 		<h4 class="h4">Log</h4>
