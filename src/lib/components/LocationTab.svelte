@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { locations } from '$lib/building.svelte';
+	import { locations } from '$lib/core/building.svelte';
 	import Building from '$lib/components/Building.svelte';
 </script>
 

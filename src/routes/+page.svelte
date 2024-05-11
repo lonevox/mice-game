@@ -2,6 +2,9 @@
 	import { Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
+	import { load } from '$lib/baseGame';
+
+	load();
 
 	let tabSet = $state<number>(0);
 </script>

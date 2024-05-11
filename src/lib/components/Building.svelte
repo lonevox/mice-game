@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Building } from '../building.svelte';
+	import type { Building } from '$lib/core/building.svelte';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
