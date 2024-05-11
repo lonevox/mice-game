@@ -1,3 +1,7 @@
+import { getResourceProductionBaseEffects } from '$lib/core/building.svelte';
+import { evaluateNumericEffects } from '$lib/core/effect.svelte';
+import { derived } from '$lib/core/util.svelte';
+
 export type Rarity = {
 	name: string,
 	color: string,
@@ -27,14 +31,14 @@ export type Resource = {
 	category?: Category,
 	amount: number,
 	maxAmount: number,
-	production: number,
+	production: { readonly value: number },
 	productionRatio: number,
 }
 export const resourceDefaults = {
 	rarity: rarities.Common,
-	amount: 1,
+	amount: 0,
 	maxAmount: 100,
-	production: 0,
+	production: { value: 0 },
 	productionRatio: 1,
 }
 
@@ -44,5 +48,15 @@ export function addResource(resource: Resource) {
 	if (resource.hasOwnProperty(resource.name)) {
 		throw new Error("Resource with name '" + resource.name + "' already exists");
 	}
+	resource.production = derived(() => {
+		let effects = getResourceProductionBaseEffects();
+		// TODO: Instead of the possibility of effects[resource.name] being undefined,
+		//  resourceProductionBaseEffects should have all resources, not just the ones that have a
+		//  resourceProductionBase effect.
+		if (effects[resource.name] !== undefined) {
+			return evaluateNumericEffects(effects[resource.name]);
+		}
+		return 0;
+	});
 	resources[resource.name] = resource;
 }

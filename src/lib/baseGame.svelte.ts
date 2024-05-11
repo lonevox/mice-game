@@ -1,7 +1,13 @@
 // This file contains the base game content.
 
-import { addBuilding, addLocation, buildingDefaults, locationDefaults } from '$lib/core/building.svelte';
+import {
+	addBuilding,
+	addLocation,
+	buildingDefaults, buildings, getBuildingEffects, getResourceProductionBaseEffects,
+	locationDefaults
+} from '$lib/core/building.svelte';
 import { addResource, rarities, resourceDefaults } from '$lib/core/resource.svelte';
+import { effect } from '$lib/core/effect.svelte';
 
 export function load() {
 	console.log("Loading base game...")
@@ -19,22 +25,21 @@ export function load() {
 		name: "Foraging Zone",
 		location: "Rath",
 		space: 2,
-		// effects: new EffectSource({
-		// 	resourceProductionBase: {
-		// 		grain: () => 0.125 * this.owned,
-		// 	},
-		// 	eventChanceRatio: {
-		// 		rainbow: () => 0.05 * this.owned,
-		// 	},
-		// 	enableEvent: {
-		// 		rainbow: () => this.owned > 0,
-		// 	},
-		// }),
+		effects: {
+			resourceProductionBase: {
+				"Grain": effect(0.125, (v) => v * buildings["Foraging Zone"].owned),
+			},
+		},
 	});
 	addBuilding({
 		...buildingDefaults,
 		name: "Burrow",
 		location: "Rath",
+		effects: {
+			resourceProductionBase: {
+				"Grain": effect(0.5, (v) => v * buildings["Burrow"].owned),
+			}
+		},
 	});
 
 	// Resources

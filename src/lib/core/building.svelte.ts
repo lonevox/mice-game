@@ -1,3 +1,5 @@
+import type { Effect, EffectRecord } from '$lib/core/effect.svelte';
+
 export type Location = {
 	name: string,
 	unlocked: boolean,
@@ -22,13 +24,45 @@ export type Building = {
 	location: string,
 	space: number,
 	owned: number,
+	effects: Record<string, EffectRecord>,
 }
 export const buildingDefaults = {
 	space: 1,
 	owned: 0,
+	effects: {},
 }
 
-export const buildings: Record<string, Building> = {};
+export const buildings = $state<Record<string, Building>>({});
+
+const buildingEffects = $derived.by(() => {
+	let out: Record<string, Record<string, Effect[]>> = {};
+	for (const building of Object.values(buildings)) {
+		for (const [effectName, effectRecord] of Object.entries(building.effects)) {
+			if (!out.hasOwnProperty(effectName)) {
+				out[effectName] = {};
+			}
+			let outEffect = out[effectName];
+			for (const [key, value] of Object.entries(effectRecord)) {
+				if (!outEffect.hasOwnProperty(key)) {
+					outEffect[key] = [];
+				}
+				outEffect[key].push(value);
+			}
+		}
+	}
+	return out;
+});
+export function getBuildingEffects() {
+	return buildingEffects;
+}
+
+const resourceProductionBaseEffects = $derived.by(() => {
+	let value = $state(buildingEffects.resourceProductionBase as Record<string, Effect<number>[]>);
+	return value;
+});
+export function getResourceProductionBaseEffects() {
+	return resourceProductionBaseEffects;
+}
 
 export function addBuilding(building: Building) {
 	if (buildings.hasOwnProperty(building.name)) {

@@ -2,7 +2,7 @@
 	import { Tab, TabGroup } from '@skeletonlabs/skeleton';
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
-	import { load } from '$lib/baseGame';
+	import { load } from '$lib/baseGame.svelte';
 
 	load();
 
