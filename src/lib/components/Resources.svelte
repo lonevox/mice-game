@@ -23,9 +23,9 @@
 <div class="space-y-1">
 	<h4 class="h4">Resources</h4>
 	<div class="mx-auto bg-surface-900 table w-96 border-spacing-1">
-		{#each resources as resource}
+		{#each Object.values(resources) as resource}
 			<div class="table-row hover:bg-surface-800">
-				<p class="table-cell max-w-16 px-1 truncate" style="color: {resource.rarity.color}">{resource.name}</p>
+				<p class="table-cell max-w-10 px-1 truncate" style="color: {resource.rarity.color}">{resource.name.toLowerCase()}</p>
 				<p class="table-cell px-1">{formatAmount(resource.amount)}</p>
 				<p class="table-cell px-1 text-surface-500">/{resource.maxAmount}</p>
 				<p class="table-cell px-1">{formatProduction(resource.production)}</p>
