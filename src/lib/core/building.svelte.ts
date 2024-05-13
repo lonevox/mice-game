@@ -21,12 +21,14 @@ export function addLocation(location: Location) {
 
 export type Building = {
 	name: string,
+	description: string,
 	location: string,
 	space: number,
 	owned: number,
 	effects: Record<string, EffectRecord>,
 }
 export const buildingDefaults = {
+	description: "",
 	space: 1,
 	owned: 0,
 	effects: {},

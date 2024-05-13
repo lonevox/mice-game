@@ -23,6 +23,7 @@ export function load() {
 	addBuilding({
 		...buildingDefaults,
 		name: "Foraging Zone",
+		description: "An area reserved for poking around.",
 		location: "Rath",
 		space: 2,
 		effects: {
