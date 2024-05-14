@@ -34,7 +34,7 @@
 		{#each Object.entries(building.effects) as [effectName, effect]}
 			{#if effectName === "resourceProductionBase"}
 				{#each Object.entries(effect) as [key, value]}
-					<p class="text-surface-300">{key} production: {formatProduction(value.initial)}</p>
+					<p class="text-surface-600-300-token">{key} production: {formatProduction(value.initial)}</p>
 				{/each}
 			{/if}
 		{/each}

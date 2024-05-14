@@ -4,13 +4,15 @@
 	import Resources from '$lib/components/Resources.svelte';
 	import { load } from '$lib/baseGame.svelte';
 	import Log from '$lib/components/Log.svelte';
+	import AppBar from '$lib/components/AppBar.svelte';
 
 	load();
 
 	let tabSet = $state<number>(0);
 </script>
 
-<div class="flex flex-row max-w-screen-2xl mx-auto space-x-8">
+<AppBar />
+<div class="flex flex-row max-w-screen-2xl mx-auto mt-3 space-x-8">
 	<div class="basis-1/4">
 		<Resources />
 	</div>
