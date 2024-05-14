@@ -92,7 +92,6 @@ export function addBuilding(building: Building) {
 		return out;
 	});
 	building.canAfford = derived(() => {
-		console.log("calculating canAfford");
 		for (const [resource, price] of Object.entries(buildings[building.name].price.value)) {
 			if (resources[resource].amount < price) {
 				return false;
