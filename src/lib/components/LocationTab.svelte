@@ -5,7 +5,7 @@
 
 {#each Object.values(locations) as location}
 	<h4 class="h4">{location.name}</h4>
-	<div class="grid grid-cols-2 gap-2">
+	<div class="grid grid-cols-2 gap-6">
 		{#each location.buildings as building}
 			<Building bind:building />
 		{/each}
