@@ -15,7 +15,14 @@
 
 <div>
 	<div class="btn-group variant-ghost w-full" use:popup={{ event: 'hover', target: 'popupHover-' + building.name, placement: 'right-start' }}>
-		<button class="variant-filled-surface w-full" disabled={!building.canAfford.value} onclick={() => purchaseBuilding(building)}>{formatBuildingText(building)}</button>
+		<button
+			class="variant-filled-surface w-full"
+			style={!building.canAfford.value ? 'cursor: default !important' : ''}
+			disabled={!building.canAfford.value}
+			onclick={() => purchaseBuilding(building)}
+		>
+			{formatBuildingText(building)}
+		</button>
 		{#if building.owned > 0}
 			<button onclick={() => building.owned -= 1}>Sell</button>
 		{/if}
