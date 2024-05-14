@@ -3,6 +3,7 @@
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
 	import { load } from '$lib/baseGame.svelte';
+	import Log from '$lib/components/Log.svelte';
 
 	load();
 
@@ -27,6 +28,6 @@
 		</TabGroup>
 	</div>
 	<div class="basis-1/4">
-		<h4 class="h4">Log</h4>
+		<Log />
 	</div>
 </div>
