@@ -1,17 +1,6 @@
 <script lang="ts">
 	import { resources } from '$lib/core/resource.svelte';
-	import { ticksPerSecond } from '$lib/core/game';
-	import { formatDecimal } from '$lib/core/util.svelte';
-
-	function formatProduction(production: number): string {
-		if (production > 0) {
-			return "+" + formatDecimal(production * ticksPerSecond) + "/s";
-		}
-		if (production < 0) {
-			return "-" + formatDecimal(production * ticksPerSecond) + "/s";
-		}
-		return "";
-	}
+	import { formatDecimal, formatProduction } from '$lib/core/util.svelte';
 </script>
 
 <div class="space-y-1">

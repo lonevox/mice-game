@@ -26,6 +26,9 @@ export function load() {
 		description: "An area reserved for poking around.",
 		location: "Rath",
 		space: 2,
+		basePrice: {
+			"Grain": 10,
+		},
 		effects: {
 			resourceProductionBase: {
 				"Grain": effect(0.125, (v) => v * buildings["Foraging Zone"].owned),
@@ -36,6 +39,9 @@ export function load() {
 		...buildingDefaults,
 		name: "Burrow",
 		location: "Rath",
+		basePrice: {
+			"Grain": 10,
+		},
 		effects: {
 			resourceProductionBase: {
 				"Grain": effect(0.5, (v) => v * buildings["Burrow"].owned),
@@ -48,6 +54,7 @@ export function load() {
 		...resourceDefaults,
 		name: "Grain",
 		rarity: rarities.Common,
+		amount: 50,
 	});
 	addResource({
 		...resourceDefaults,

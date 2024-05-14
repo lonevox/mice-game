@@ -1,4 +1,6 @@
 import type { Effect, EffectRecord } from '$lib/core/effect.svelte';
+import { derived } from '$lib/core/util.svelte';
+import { resources } from '$lib/core/resource.svelte';
 
 export type Location = {
 	name: string,
@@ -25,12 +27,19 @@ export type Building = {
 	location: string,
 	space: number,
 	owned: number,
+	price: { readonly value: Record<string, number> },
+	basePrice: Record<string, number>,
+	priceRatio: number,
+	canAfford: { readonly value: boolean },
 	effects: Record<string, EffectRecord>,
 }
 export const buildingDefaults = {
 	description: "",
 	space: 1,
 	owned: 0,
+	price: { value: {} },
+	priceRatio: 1.15,
+	canAfford: { value: false },
 	effects: {},
 }
 
@@ -73,6 +82,32 @@ export function addBuilding(building: Building) {
 	if (!(building.location in locations)) {
 		throw new Error("Location '" + building.location + "' doesn't exist");
 	}
+	building.price = derived(() => {
+		let out = Object.assign({} as Record<string, number>, buildings[building.name].basePrice);
+		for (let i = 0; i < buildings[building.name].owned; i++) {
+			for (const resource of Object.keys(out)) {
+				out[resource] *= buildings[building.name].priceRatio;
+			}
+		}
+		return out;
+	});
+	building.canAfford = derived(() => {
+		console.log("calculating canAfford");
+		for (const [resource, price] of Object.entries(buildings[building.name].price.value)) {
+			if (resources[resource].amount < price) {
+				return false;
+			}
+		}
+		return true;
+	});
 	buildings[building.name] = building;
 	locations[building.location].buildings.push(building);
+}
+
+export function purchaseBuilding(building: Building) {
+	if (!building.canAfford.value) return;
+	for (const [resource, amount] of Object.entries(building.price.value)) {
+		resources[resource].amount -= amount;
+	}
+	building.owned += 1;
 }

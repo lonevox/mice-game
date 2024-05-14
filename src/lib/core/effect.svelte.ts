@@ -8,6 +8,7 @@ export function effect<T>(initial: T, apply: (value: T) => T) {
 	let value = $state<T>(initial);
 	return {
 		get value() { return apply(value); },
+		get initial() { return initial; },
 		set value(v) { value = v; },
 	}
 }

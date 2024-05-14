@@ -1,3 +1,5 @@
+import { ticksPerSecond } from '$lib/core/game';
+
 /**
  * Returns a getter for the result of a derived function.
  * The getter always returns the most recently computed value. This is useful if you want to have a
@@ -22,4 +24,14 @@ export function formatDecimal(input: number, decimalPlaces: number = 2): string 
 		return input.toString();
 	}
 	return input.toFixed(decimalPlaces);
+}
+
+export function formatProduction(production: number): string {
+	if (production > 0) {
+		return "+" + formatDecimal(production * ticksPerSecond) + "/s";
+	}
+	if (production < 0) {
+		return "-" + formatDecimal(production * ticksPerSecond) + "/s";
+	}
+	return "";
 }
