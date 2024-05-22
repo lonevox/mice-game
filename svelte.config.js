@@ -10,6 +10,12 @@ const config = {
 	
 	vitePlugin: {
 		inspector: true,
+		// Compile this project in runes mode, but exclude libraries.
+		dynamicCompileOptions({filename}) {
+			if(!filename.includes('node_modules')) {
+				return { runes: true }
+			}
+		},
 	},
 	kit: {
 		// adapter-auto only supports some environments, see https://kit.svelte.dev/docs/adapter-auto for a list.
