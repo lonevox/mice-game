@@ -3,61 +3,105 @@
 import {
 	addBuilding,
 	addLocation,
-	buildingDefaults, buildings, getBuildingEffects, getResourceProductionBaseEffects,
 	locationDefaults
 } from '$lib/core/building.svelte';
-import { addResource, rarities, resourceDefaults } from '$lib/core/resource.svelte';
-import { effect } from '$lib/core/effect.svelte';
+import { addResource, rarities } from '$lib/core/resource.svelte';
+import { link, multiply } from '$lib/core/effect.svelte';
 
 export function load() {
 	console.log("Loading base game...")
 
-	// Locations
+	//// Locations ////
+
 	addLocation({
 		...locationDefaults,
 		name: "Rath",
 		unlocked: true,
+		buildings: [],
+	});
+	addLocation({
+		...locationDefaults,
+		name: "Nib",	// Moon of Rath
+		unlocked: true, // TODO: unlocked only for testing purposes
+		buildings: [],
 	});
 
-	// Buildings
+	//// Buildings ////
+
+	// Rath
 	addBuilding({
-		...buildingDefaults,
+		name: "Burrow",
+		location: "Rath",
+		owned: 1,
+		price: {
+			"Grain": 10,
+		},
+		links: [
+			link("Building.Burrow.owned", "Resource.Mice.maxAmount", {
+				operation: multiply(6),
+			}),
+		],
+	});
+	addBuilding({
 		name: "Foraging Zone",
 		description: "An area reserved for poking around.",
 		location: "Rath",
 		space: 2,
-		basePrice: {
+		price: {
 			"Grain": 10,
 		},
-		effects: {
-			resourceProductionBase: {
-				"Grain": effect(0.125, (v) => v * buildings["Foraging Zone"].owned),
-			},
-		},
+		links: [
+			link("Building.Foraging Zone.owned", "Resource.Grain.production", {
+				operation: multiply(0.125),
+			}),
+		],
 	});
 	addBuilding({
-		...buildingDefaults,
-		name: "Burrow",
+		name: "Fortified Stump",
+		description: "Castle on a hill of wood.",
 		location: "Rath",
-		basePrice: {
+		space: 2,
+		price: {
 			"Grain": 10,
 		},
-		effects: {
-			resourceProductionBase: {
-				"Grain": effect(0.5, (v) => v * buildings["Burrow"].owned),
-			}
+		links: [
+			link("Building.Fortified Stump.owned", "Resource.Grain.production", {
+				operation: multiply(0.05),
+				alternativeType: "ratio",
+			}),
+		],
+	});
+
+	// Nib
+	addBuilding({
+		name: "Rover Factory",
+		description: "Produces rovers to explore Nib.",
+		location: "Nib",
+		space: 2,
+		price: {
+			"Grain": 10,
 		},
 	});
 
-	// Resources
+	//// Resources ////
+
 	addResource({
-		...resourceDefaults,
 		name: "Grain",
+		description: "Food for your mice.",
 		rarity: rarities.Common,
-		amount: 50,
+		maxAmount: 5000,
+		amount: 20,
 	});
 	addResource({
-		...resourceDefaults,
+		name: "Mice",
+		rarity: rarities.Common,
+		amount: 1,
+	});
+	addResource({
+		name: "Rats",
+		rarity: rarities.Common,
+	});
+	addResource({
 		name: "Another Longer Thing",
 		rarity: rarities.Uncommon,
 	});

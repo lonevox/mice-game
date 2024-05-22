@@ -1,6 +1,5 @@
-import { getResourceProductionBaseEffects } from '$lib/core/building.svelte';
-import { evaluateNumericEffects } from '$lib/core/effect.svelte';
-import { derived } from '$lib/core/util.svelte';
+import type { Link } from '$lib/core/effect.svelte';
+import { GameObject } from '$lib/core/gameObject.svelte';
 
 export type Rarity = {
 	name: string,
@@ -17,7 +16,7 @@ export const rarities = $state<Record<string, Rarity>>({
 	}
 });
 
-export type Category = {
+export type ResourceCategory = {
 	name: string,
 	open: boolean,
 }
@@ -25,38 +24,62 @@ export const categoryDefaults = {
 	open: false,
 }
 
-export type Resource = {
+/**
+ * Configures the base values for a Resource.
+ */
+type ResourceConfig = {
 	name: string,
-	rarity: Rarity,
-	category?: Category,
-	amount: number,
-	maxAmount: number,
-	production: { readonly value: number },
-	productionRatio: number,
+	description?: string,
+	rarity?: Rarity,
+	category?: ResourceCategory,
+	amount?: number,
+	maxAmount?: number,
+	production?: number,
+	links?: Link[],
 }
-export const resourceDefaults = {
-	rarity: rarities.Common,
-	amount: 0,
-	maxAmount: 100,
-	production: { value: 0 },
-	productionRatio: 1,
+export class Resource extends GameObject {
+	// State
+	rarity = $state<Rarity>(rarities.Common);
+	category = $state<ResourceCategory>();
+	amount = $state(0);
+	baseMaxAmount = $state(0);
+	baseProduction = $state(0);
+
+	// Derived
+	maxAmount = $derived<number>(this.baseMaxAmount + this.linkedPropertyValues["maxAmount"].flat * this.linkedPropertyValues["maxAmount"].ratio);
+	production = $derived<number>(this.baseProduction + this.linkedPropertyValues["production"].flat * this.linkedPropertyValues["production"].ratio);
+
+	constructor(resourceConfig: ResourceConfig) {
+		super(resourceConfig.name,
+			resourceConfig.description ?? "",
+			resourceConfig.links ?? [],
+			["maxAmount", "production"]);
+		$inspect(this.production)
+		// Optional properties
+		if (resourceConfig.rarity !== undefined) {
+			this.rarity = resourceConfig.rarity;
+		}
+		if (resourceConfig.category !== undefined) {
+			this.category = resourceConfig.category;
+		}
+		if (resourceConfig.amount !== undefined) {
+			this.amount = resourceConfig.amount;
+		}
+		if (resourceConfig.maxAmount !== undefined) {
+			this.baseMaxAmount = resourceConfig.maxAmount;
+		}
+		if (resourceConfig.production !== undefined) {
+			this.baseProduction = resourceConfig.production;
+		}
+	}
 }
 
 export const resources = $state<Record<string, Resource>>({});
 
-export function addResource(resource: Resource) {
+export function addResource(resourceConfig: ResourceConfig) {
+	const resource = new Resource(resourceConfig);
 	if (resource.hasOwnProperty(resource.name)) {
 		throw new Error("Resource with name '" + resource.name + "' already exists");
 	}
-	resource.production = derived(() => {
-		let effects = getResourceProductionBaseEffects();
-		// TODO: Instead of the possibility of effects[resource.name] being undefined,
-		//  resourceProductionBaseEffects should have all resources, not just the ones that have a
-		//  resourceProductionBase effect.
-		if (effects[resource.name] !== undefined) {
-			return evaluateNumericEffects(effects[resource.name]);
-		}
-		return 0;
-	});
 	resources[resource.name] = resource;
 }

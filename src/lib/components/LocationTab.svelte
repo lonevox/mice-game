@@ -3,11 +3,17 @@
 	import Building from '$lib/components/Building.svelte';
 </script>
 
-{#each Object.values(locations) as location}
-	<h4 class="h4 ml-2 mb-2">{location.name}</h4>
-	<div class="grid grid-cols-2 gap-x-6 gap-y-4">
-		{#each location.buildings as building}
-			<Building bind:building />
-		{/each}
-	</div>
-{/each}
+<div class="space-y-4">
+	{#each Object.values(locations) as location}
+		{#if location.unlocked}
+			<div>
+				<h4 class="h4 ml-2 mb-2">{location.name}</h4>
+				<div class="grid grid-cols-2 gap-x-6 gap-y-4">
+					{#each location.buildings as building, j}
+						<Building bind:building={location.buildings[j]} />
+					{/each}
+				</div>
+			</div>
+		{/if}
+	{/each}
+</div>

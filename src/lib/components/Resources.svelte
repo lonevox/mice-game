@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { popup } from '@skeletonlabs/skeleton';
 	import { resources } from '$lib/core/resource.svelte';
-	import { formatDecimal, formatProduction } from '$lib/core/util.svelte';
+	import { formatDecimal, formatProduction, formatRatioAsPercentage } from '$lib/core/util.svelte';
 </script>
 
 <div class="space-y-1">
@@ -11,8 +12,17 @@
 				<div class="table-cell px-1 max-w-16 truncate" style="color: {resource.rarity.color}" title={resource.name.toLowerCase()}>{resource.name.toLowerCase()}</div>
 				<div class="table-cell px-1 min-w-10 text-surface-900-50-token">{formatDecimal(resource.amount)}</div>
 				<div class="table-cell px-1 min-w-10 text-surface-400-500-token">/{resource.maxAmount}</div>
-				<div class="table-cell px-1 min-w-10 text-surface-900-50-token">{formatProduction(resource.production.value)}</div>
+				<div class="table-cell px-1 min-w-10 text-surface-900-50-token" use:popup={{ event: 'hover', target: 'popupHover-' + resource.name, placement: 'right-start' }}>{formatProduction(resource.production)}</div>
 			</div>
 		{/each}
 	</div>
+	<!-- Popups. These are separate from the table rows because they interfere with the table spacing. -->
+	{#each Object.values(resources) as resource}
+		<div class="card p-4 w-72 shadow-xl space-y-2 z-10 duration-0" data-popup={"popupHover-" + resource.name}>
+			<p>{resource.description}</p>
+			<hr />
+			<p>Production: {formatProduction(resource.linkedPropertyValues["production"].flat)}</p>
+			<p>Ratio: {formatRatioAsPercentage(resource.linkedPropertyValues["production"].ratio)}</p>
+		</div>
+	{/each}
 </div>

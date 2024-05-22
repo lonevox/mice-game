@@ -1,25 +1,27 @@
 <script lang="ts">
-	import { type Building, purchaseBuilding } from '$lib/core/building.svelte';
+	import { type Building, getLinks, tryPurchaseBuilding } from '$lib/core/building.svelte';
 	import { popup } from '@skeletonlabs/skeleton';
-	import { formatDecimal, formatProduction } from '$lib/core/util.svelte.js';
+	import { formatDecimal } from '$lib/core/util.svelte.js';
 	import { resources } from '$lib/core/resource.svelte';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
 		if (building.owned > 0) {
-			return building.name + " (" + building.owned + ")";
+			return building.displayName + " (" + building.owned + ")";
 		}
-		return building.name;
+		return building.displayName;
 	}
+
+	const link = getLinks();
 </script>
 
 <div>
 	<div class="btn-group variant-ghost w-full" use:popup={{ event: 'hover', target: 'popupHover-' + building.name, placement: 'right-start' }}>
 		<button
 			class="variant-filled-surface w-full"
-			style={!building.canAfford.value ? 'cursor: default !important' : ''}
-			disabled={!building.canAfford.value}
-			onclick={() => purchaseBuilding(building)}
+			style={!building.canAfford ? 'cursor: default !important' : ''}
+			disabled={!building.canAfford}
+			onclick={() => tryPurchaseBuilding(building)}
 		>
 			{formatBuildingText(building)}
 		</button>
@@ -30,7 +32,7 @@
 	<div class="card p-4 w-72 shadow-xl space-y-2 z-10 duration-0" data-popup={"popupHover-" + building.name}>
 		<p>{building.description}</p>
 		<hr />
-		{#each Object.entries(building.price.value) as [resource, price]}
+		{#each Object.entries(building.price) as [resource, price]}
 			<div class="grid grid-cols-2">
 				<p>{resource.toLowerCase()}</p>
 				<p class="text-right" class:text-error-400={price > resources[resource].amount}>{formatDecimal(price)}</p>
@@ -38,10 +40,17 @@
 		{/each}
 		<hr />
 		<p class="text-center font-bold">Effects</p>
-		{#each Object.entries(building.effects) as [effectName, effect]}
-			{#if effectName === "resourceProductionBase"}
-				{#each Object.entries(effect) as [key, value]}
-					<p class="text-surface-600-300-token">{key} production: {formatProduction(value.initial)}</p>
+		{#each Object.entries(getLinks()["Building"]?.[building.name] ?? []) as [fromPropertyName, linkedTo]}
+			{#if fromPropertyName === "owned"}
+				<p class="underline">For each {building.displayName}</p>
+				{#each Object.entries(linkedTo) as [gameObjectClass, propertyPairs]}
+					{#each Object.entries(propertyPairs) as [gameObjectName, property]}
+						{#each Object.entries(property) as [propertyName, propertyValue]}
+							{#if propertyName === "maxAmount"}
+								<p class="text-surface-600-300-token">Max {gameObjectName}: {propertyValue.operation.argument}</p>
+							{/if}
+						{/each}
+					{/each}
 				{/each}
 			{/if}
 		{/each}

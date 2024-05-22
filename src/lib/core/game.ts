@@ -6,9 +6,8 @@ const tickInterval = setInterval(() => { tick() }, 1000 / ticksPerSecond);
 
 function tick() {
 	for (const resource of Object.values(resources)) {
-		const gained = resource.production.value * resource.productionRatio;
-		if (resource.amount + gained < resource.maxAmount) {
-			resource.amount += gained;
+		if (resource.amount + resource.production < resource.maxAmount) {
+			resource.amount += resource.production;
 		} else {
 			resource.amount = resource.maxAmount;
 		}
