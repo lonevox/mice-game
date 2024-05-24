@@ -1,5 +1,3 @@
-import { ticksPerSecond } from '$lib/core/game';
-
 /**
  * Represents properties with T being their value type.
  * The shape of the type is:
@@ -40,10 +38,10 @@ export function formatDecimal(input: number, decimalPlaces: number = 2): string 
 
 export function formatProduction(production: number): string {
 	if (production > 0) {
-		return "+" + formatDecimal(production * ticksPerSecond) + "/s";
+		return "+" + formatDecimal(production) + "/s";
 	}
 	if (production < 0) {
-		return "-" + formatDecimal(production * ticksPerSecond) + "/s";
+		return "-" + formatDecimal(production) + "/s";
 	}
 	return "";
 }

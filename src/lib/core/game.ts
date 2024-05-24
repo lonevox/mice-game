@@ -1,13 +1,19 @@
 import { resources } from '$lib/core/resource.svelte';
 
-export const ticksPerSecond = 5;
+const ticksPerSecond = 60;
 
-const tickInterval = setInterval(() => { tick() }, 1000 / ticksPerSecond);
+/**
+ * Starts the game loop. Should only be called once.
+ */
+export function start() {
+	setInterval(() => { tick() }, 1000 / ticksPerSecond);
+}
 
 function tick() {
 	for (const resource of Object.values(resources)) {
-		if (resource.amount + resource.production < resource.maxAmount) {
-			resource.amount += resource.production;
+		const productionPerTick = resource.production / ticksPerSecond;
+		if (resource.amount + productionPerTick < resource.maxAmount) {
+			resource.amount += productionPerTick;
 		} else {
 			resource.amount = resource.maxAmount;
 		}

@@ -5,8 +5,10 @@
 	import { load } from '$lib/baseGame.svelte';
 	import Log from '$lib/components/Log.svelte';
 	import AppBar from '$lib/components/AppBar.svelte';
+	import { start } from '$lib/core/game';
 
 	load();
+	start();
 
 	let tabSet = $state<number>(0);
 </script>

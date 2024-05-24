@@ -52,7 +52,7 @@ export function load() {
 		},
 		links: [
 			link("Building.Foraging Zone.owned", "Resource.Grain.production", {
-				operation: multiply(0.125),
+				operation: multiply(1),
 			}),
 		],
 	});

@@ -3,7 +3,6 @@
 	import { popup } from '@skeletonlabs/skeleton';
 	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
 	import { Resource, resources } from '$lib/core/resource.svelte';
-	import { ticksPerSecond } from '$lib/core/game';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
@@ -17,7 +16,7 @@
 		if (resource.amount > price) {
 			return formatDecimal(price);
 		}
-		const secondsLeft = (price - resource.amount) / resource.production / ticksPerSecond;
+		const secondsLeft = (price - resource.amount) / resource.production;
 		const timeLeft = formatTimeLeft(secondsLeft);
 		if (timeLeft === "") {
 			return formatDecimal(resource.amount) + " / " + formatDecimal(price)
