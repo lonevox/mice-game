@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { type Building, getLinks, tryPurchaseBuilding } from '$lib/core/building.svelte';
 	import { popup } from '@skeletonlabs/skeleton';
-	import { formatDecimal } from '$lib/core/util.svelte.js';
-	import { resources } from '$lib/core/resource.svelte';
+	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
+	import { Resource, resources } from '$lib/core/resource.svelte';
+	import { ticksPerSecond } from '$lib/core/game';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
@@ -10,6 +11,18 @@
 			return building.displayName + " (" + building.owned + ")";
 		}
 		return building.displayName;
+	}
+
+	function formatResourcePrice(resource: Resource, price: number): string {
+		if (resource.amount > price) {
+			return formatDecimal(price);
+		}
+		const secondsLeft = (price - resource.amount) / resource.production / ticksPerSecond;
+		const timeLeft = formatTimeLeft(secondsLeft);
+		if (timeLeft === "") {
+			return formatDecimal(resource.amount) + " / " + formatDecimal(price)
+		}
+		return formatDecimal(resource.amount) + " / " + formatDecimal(price) + " (" + timeLeft + ")";
 	}
 
 	const link = getLinks();
@@ -32,10 +45,10 @@
 	<div class="card p-4 w-72 shadow-xl space-y-2 z-10 duration-0" data-popup={"popupHover-" + building.name}>
 		<p>{building.description}</p>
 		<hr />
-		{#each Object.entries(building.price) as [resource, price]}
-			<div class="grid grid-cols-2">
-				<p>{resource.toLowerCase()}</p>
-				<p class="text-right" class:text-error-400={price > resources[resource].amount}>{formatDecimal(price)}</p>
+		{#each Object.entries(building.price) as [resourceName, price]}
+			<div class="flex">
+				<p class="flex-none">{resourceName.toLowerCase()}</p>
+				<p class="flex-1 text-right" class:text-error-400={price > resources[resourceName].amount}>{formatResourcePrice(resources[resourceName], price)}</p>
 			</div>
 		{/each}
 		<hr />

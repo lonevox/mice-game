@@ -67,3 +67,36 @@ export function formatRatioAsPercentage(ratio: number): string {
 	}
 	return "";
 }
+
+/**
+ * Formats seconds into a time left string.
+ *
+ * The resulting string is in the form "1d 1h 1m 1s". None of the numbers are decimals, unless there
+ * is under 10 seconds left in which case the seconds are displayed with 1dp. If any values are 0,
+ * they don't appear in the output (such as "1h 1m 1s" if the number of days is 0).
+ * Will return an empty string if Infinity or NaN seconds are passed in.
+ * @param seconds The number to format.
+ */
+export function formatTimeLeft(seconds: number): string {
+		if (seconds === Infinity || isNaN(seconds)) {
+			return "";
+		}
+		const d = Math.floor(seconds / (3600 * 24));
+		const h = Math.floor(seconds % (3600 * 24) / 3600);
+		const m = Math.floor(seconds % 3600 / 60);
+		const s = seconds % 60;
+		let out = "";
+		if (d !== 0) {
+			out += d + "d ";
+		}
+		if (h !== 0) {
+			out += h + "h ";
+		}
+		if (m !== 0) {
+			out += m + "m ";
+		}
+		if (m === 0 && s < 10) {
+			return out + formatDecimal(s, 1) + "s";
+		}
+		return out + Math.floor(s) + "s";
+}
