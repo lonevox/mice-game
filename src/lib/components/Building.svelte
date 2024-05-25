@@ -3,7 +3,7 @@
 	import { popup } from '@skeletonlabs/skeleton';
 	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
 	import { Resource, resources } from '$lib/core/resource.svelte';
-	import { getLinks } from '$lib/core/effect.svelte';
+	import { getLinksDeep } from '$lib/core/effect.svelte';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
@@ -51,14 +51,14 @@
 		{/each}
 		<hr />
 		<p class="text-center font-bold">Effects</p>
-		{#each Object.entries(getLinks()["Building"]?.[building.name] ?? []) as [fromPropertyName, linkedTo]}
+		{#each Object.entries(getLinksDeep()["Building"]?.[building.name] ?? []) as [fromPropertyName, linkedTo]}
 			{#if fromPropertyName === "owned"}
 				<p class="underline">For each {building.displayName}</p>
 				{#each Object.entries(linkedTo) as [gameObjectClass, propertyPairs]}
 					{#each Object.entries(propertyPairs) as [gameObjectName, property]}
 						{#each Object.entries(property) as [propertyName, propertyValue]}
 							{#if propertyName === "maxAmount"}
-								<p class="text-surface-600-300-token">Max {gameObjectName}: {propertyValue.operation.argument}</p>
+								<p class="text-surface-600-300-token">Max {gameObjectName}: {propertyValue.config.operation.argument}</p>
 							{/if}
 						{/each}
 					{/each}

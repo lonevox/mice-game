@@ -36,7 +36,7 @@ export abstract class GameObject {
 		for (const propertyName of propertyNames) {
 			// Create a property in this.linkedPropertyValues that is derived from all the properties that link to it.
 			const value = $derived.by<LinkedPropertyValue>(() => {
-				const fromProperties = getLinksReversed()[className]?.[this.name]?.[propertyName] as PropertyTrios<LinkConfig> | undefined;
+				const fromProperties = getLinksReversed()[className]?.[this.name]?.[propertyName] as PropertyTrios<Link> | undefined;
 				if (fromProperties !== undefined) {
 					return computeLinks(fromProperties);
 				}
@@ -103,12 +103,18 @@ export function gameObjectProperty(from: string): GameObjectProperty {
 	}
 }
 
-export function gameObjectPropertyValue(gop: GameObjectProperty) {
+export function createDerivedFromGameObjectProperty(gop: GameObjectProperty): { readonly value: number } {
 	switch (gop.class) {
 		case "Building":
-			return buildings[gop.name][gop.property];
+			const buildingPropertyValue = $derived(buildings[gop.name][gop.property]);
+			return {
+				get value() { return buildingPropertyValue; }
+			};
 		case "Resource":
-			return resources[gop.name][gop.property];
+			const resourcePropertyValue = $derived(resources[gop.name][gop.property]);
+			return {
+				get value() { return resourcePropertyValue; }
+			};
 		default:
 			return gop.class satisfies never;
 	}

@@ -1,5 +1,5 @@
-import type { GameObjectName, GameObjectProperty, PropertyTrios } from '$lib/core/gameObject.svelte';
-import { gameObjectProperty, gameObjectPropertyToString, gameObjectPropertyValue } from '$lib/core/gameObject.svelte';
+import type { GameObjectProperty, PropertyTrios } from '$lib/core/gameObject.svelte';
+import { gameObjectProperty, gameObjectPropertyToString, createDerivedFromGameObjectProperty } from '$lib/core/gameObject.svelte';
 import { buildings } from '$lib/core/building.svelte';
 import { resources } from '$lib/core/resource.svelte';
 
@@ -19,8 +19,9 @@ export function multiply(argument: number): Operation {
  * Represents a link between two GameObject properties. The operation determines how the value of
  * the 'from' property effects the value of the 'to' property.
  *
- * In the below example, 'Building.Burrow.owned' is linked to 'Resource.Mice.maxAmount'. The value
- * of 'owned' is multiplied by 6, then the resulting value is added to 'maxAmount'.
+ * In the below example, 'Building.Burrow.owned' is linked to 'Resource.Mice.maxAmount'. 'value' is
+ * set to the value of 'owned' multiplied by 6. Later, in {@link computeLinks}, 'value' is added to
+ * 'maxAmount'.
  * @example
  * {
  *   from: {
@@ -38,13 +39,29 @@ export function multiply(argument: number): Operation {
  *       operator: "*",
  *       argument: 6,
  *     }
- *   }
+ *   },
+ *   value: 0,
  * }
  */
-export type Link = {
-	from: GameObjectProperty,
-	to: GameObjectProperty,
-	config: LinkConfig,
+export class Link {
+	from: GameObjectProperty;
+	to: GameObjectProperty;
+	config: LinkConfig;
+	private fromValue: { readonly value: number };
+	value = $derived(computeOperation(this.fromValue.value, this.config.operation));
+
+	constructor(from: GameObjectProperty, to: GameObjectProperty, config: LinkConfig) {
+		this.from = from;
+		this.to = to;
+		this.config = config;
+		this.fromValue = createDerivedFromGameObjectProperty(this.from);
+	}
+
+	static of(from: string, to: string, config: LinkConfig): Link {
+		const fromGOP = gameObjectProperty(from);
+		const toGOP = gameObjectProperty(to);
+		return new Link(fromGOP, toGOP, config);
+	}
 }
 /**
  * alternativeType:
@@ -76,7 +93,7 @@ export type LinkedPropertyValue = {
  * 				Resource: {
  * 					"Mice": {
  * 						maxAmount: {
- * 						  operation: multiply(6) // For each Burrow you own you gain 6 max Mice.
+ * 						  operation: Link {...} // For each Burrow you own you gain X max Mice.
  * 						}
  * 					}
  * 				}
@@ -87,12 +104,12 @@ export type LinkedPropertyValue = {
  * 				Resource: {
  * 					"Mice": {
  * 						maxAmount: {
- * 						  operation: multiply(20) // For each Mouse House you own you gain 20 max Mice.
+ * 						  operation: Link {...} // For each Mouse House you own you gain X max Mice.
  * 						}
  * 					},
  * 					"Rats": {
  * 					  maxAmount: {
- * 					    operation: multiply(4) // For each Mouse House you own you gain 4 max Rats.
+ * 					    operation: Link {...} // For each Mouse House you own you gain X max Rats.
  * 					  }
  * 					}
  * 				}
@@ -101,17 +118,7 @@ export type LinkedPropertyValue = {
  * 	}
  * }
  */
-export type Links = PropertyTrios<PropertyTrios<LinkConfig>>;
-
-export function link(from: string, to: string, config: LinkConfig): Link {
-	const fromGOP = gameObjectProperty(from);
-	const toGOP = gameObjectProperty(to);
-	return {
-		from: fromGOP,
-		to: toGOP,
-		config: config,
-	}
-}
+export type Links = PropertyTrios<PropertyTrios<Link>>;
 
 /**
  * Combines links into a deep Links object.
@@ -147,7 +154,7 @@ export function combineLinks(links: Link[]): Links {
 		const toProperty = link.to.property;
 		const outLinksToName = outLinksToClass[toName];
 		if (!outLinksToName.hasOwnProperty(toProperty)) {
-			outLinksToName[toProperty] = link.config;
+			outLinksToName[toProperty] = link;
 		} else {
 			throw new Error("Duplicate link: '" + gameObjectPropertyToString(link.from) +
 				" -> " + gameObjectPropertyToString(link.to) + "'");
@@ -156,31 +163,68 @@ export function combineLinks(links: Link[]): Links {
 	return outLinks;
 }
 
-export function computeLinks(linkConfigs: PropertyTrios<LinkConfig>): LinkedPropertyValue {
+/**
+ * Combines links into a deep Links object, but reversed so that the object structure is to->from->
+ * value instead of from->to->value.
+ * @param links
+ */
+export function combineLinksReversed(links: Link[]): Links {
+	const outLinks: Links = {};
+	for (const link of links) {
+		const toClass = link.to.class;
+		if (!outLinks.hasOwnProperty(toClass)) {
+			outLinks[toClass] = {};
+		}
+		const toName = link.to.name;
+		const outLinksFromClass = outLinks[toClass]!;
+		if (!outLinksFromClass.hasOwnProperty(toName)) {
+			outLinksFromClass[toName] = {};
+		}
+		const toProperty = link.to.property;
+		const outLinksFromName = outLinksFromClass[toName];
+		if (!outLinksFromName.hasOwnProperty(toProperty)) {
+			outLinksFromName[toProperty] = {};
+		}
+		const fromClass = link.from.class;
+		const outLinksFromProperty = outLinksFromName[toProperty];
+		if (!outLinksFromProperty.hasOwnProperty(fromClass)) {
+			outLinksFromProperty[fromClass] = {};
+		}
+		const fromName = link.from.name;
+		const outLinksToClass = outLinksFromProperty[fromClass]!;
+		if (!outLinksToClass.hasOwnProperty(fromName)) {
+			outLinksToClass[fromName] = {};
+		}
+		const fromProperty = link.from.property;
+		const outLinksToName = outLinksToClass[fromName];
+		if (!outLinksToName.hasOwnProperty(fromProperty)) {
+			outLinksToName[fromProperty] = link;
+		} else {
+			throw new Error("Duplicate link: '" + gameObjectPropertyToString(link.from) +
+				" -> " + gameObjectPropertyToString(link.to) + "'");
+		}
+	}
+	return outLinks;
+}
+
+export function computeLinks(links: PropertyTrios<Link>): LinkedPropertyValue {
 	let out: LinkedPropertyValue = {
 		flat: 0,
 		ratio: 1,
 	};
-	// TODO: Operation recalculation should only happen when the value of the link.from property changes.
-	for (const [className, propertyPairs] of Object.entries(linkConfigs)) {
-		for (const [name, properties] of Object.entries(propertyPairs)) {
-			for (const [property, linkConfig] of Object.entries(properties)) {
-				const fromProperty: GameObjectProperty = {
-					class: className as GameObjectName,
-					name: name,
-					property: property
-				};
-				const computedValue = computeOperation(fromProperty, linkConfig.operation);
+	for (const propertyPairs of Object.values(links)) {
+		for (const properties of Object.values(propertyPairs)) {
+			for (const link of Object.values(properties)) {
 				// Increment the correct property
-				switch (linkConfig.alternativeType) {
+				switch (link.config.alternativeType) {
 					case undefined:
-						out.flat += computedValue;
+						out.flat += link.value;
 						break;
 					case "ratio":
-						out.ratio += computedValue;
+						out.ratio += link.value;
 						break;
 					default:
-						return linkConfig.alternativeType satisfies never;
+						return link.config.alternativeType satisfies never;
 				}
 			}
 		}
@@ -188,13 +232,12 @@ export function computeLinks(linkConfigs: PropertyTrios<LinkConfig>): LinkedProp
 	return out;
 }
 
-function computeOperation(fromProperty: GameObjectProperty, operation: Operation): number {
-	const propertyValue = gameObjectPropertyValue(fromProperty);
+function computeOperation(value: number, operation: Operation): number {
 	switch (operation.operator) {
 		case "*":
-			return propertyValue * operation.argument;
+			return value * operation.argument;
 		case "+":
-			return propertyValue + operation.argument;
+			return value + operation.argument;
 		default:
 			return operation.operator satisfies never;
 	}
@@ -208,8 +251,13 @@ const links = $derived.by(() => {
 			links.push(...gameObject.links);
 		}
 	}
-	return combineLinks(links);
+	return links;
 });
+export function getLinks() {
+	return links;
+}
+
+const linksDeep = $derived(combineLinks(links));
 /**
  * This is useful for finding all properties that a property links to.
  * @example
@@ -219,10 +267,10 @@ const links = $derived.by(() => {
  *       owned: { // This property effects the following properties...
  *         Resource: {
  *           "Mice": {
- *             maxAmount: multiply(6)
+ *             maxAmount: Link {...}
  *           },
  *           "Rats": {
- *             maxAmount: multiply(2)
+ *             maxAmount: Link {...}
  *           }
  *         }
  *       }
@@ -230,26 +278,11 @@ const links = $derived.by(() => {
  *   }
  * }
  */
-export function getLinks() {
-	return links;
+export function getLinksDeep() {
+	return linksDeep;
 }
 
-const linksReversed = $derived.by(() => {
-	const reversedLinks: Link[] = [];
-	const gameObjectCollections = [buildings, resources];
-	for (const gameObjectCollection of gameObjectCollections) {
-		for (const gameObject of Object.values(gameObjectCollection)) {
-			for (const link of gameObject.links) {
-				reversedLinks.push({
-					from: link.to,
-					to: link.from,
-					config: link.config,
-				});
-			}
-		}
-	}
-	return combineLinks(reversedLinks);
-});
+const linksDeepReversed = $derived(combineLinksReversed(links));
 /**
  * This is useful for finding all properties that are linked to a property.
  * @example
@@ -259,10 +292,10 @@ const linksReversed = $derived.by(() => {
  *       maxAmount: { // This property is effected by the following...
  *         Building: {
  *           "Burrow": {
- *             owned: multiply(6)
+ *             owned: Link {...}
  *           },
  *           "Mouse House": {
- *             owned: multiply(20)
+ *             owned: Link {...}
  *           }
  *         }
  *       }
@@ -271,5 +304,5 @@ const linksReversed = $derived.by(() => {
  * }
  */
 export function getLinksReversed() {
-	return linksReversed;
+	return linksDeepReversed;
 }

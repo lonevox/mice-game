@@ -6,7 +6,7 @@ import {
 	locationDefaults
 } from '$lib/core/building.svelte';
 import { addResource, rarities } from '$lib/core/resource.svelte';
-import { link, multiply } from '$lib/core/effect.svelte';
+import { Link, multiply } from '$lib/core/effect.svelte';
 
 export function load() {
 	console.log("Loading base game...")
@@ -37,7 +37,7 @@ export function load() {
 			"Grain": 10,
 		},
 		links: [
-			link("Building.Burrow.owned", "Resource.Mice.maxAmount", {
+			Link.of("Building.Burrow.owned", "Resource.Mice.maxAmount", {
 				operation: multiply(6),
 			}),
 		],
@@ -51,7 +51,7 @@ export function load() {
 			"Grain": 10,
 		},
 		links: [
-			link("Building.Foraging Zone.owned", "Resource.Grain.production", {
+			Link.of("Building.Foraging Zone.owned", "Resource.Grain.production", {
 				operation: multiply(1),
 			}),
 		],
@@ -65,7 +65,7 @@ export function load() {
 			"Grain": 10,
 		},
 		links: [
-			link("Building.Fortified Stump.owned", "Resource.Grain.production", {
+			Link.of("Building.Fortified Stump.owned", "Resource.Grain.production", {
 				operation: multiply(0.05),
 				alternativeType: "ratio",
 			}),
@@ -89,7 +89,7 @@ export function load() {
 		name: "Grain",
 		description: "Food for your mice.",
 		rarity: rarities.Common,
-		maxAmount: 5000,
+		maxAmount: 100,
 		amount: 20,
 	});
 	addResource({
