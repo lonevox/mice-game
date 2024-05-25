@@ -1,38 +1,20 @@
-# create-svelte
+# Mice Game
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+## Mods
 
-## Creating a project
+> [!NOTE]  
+> Mod support is still in development. Documentation will be available on the wiki when mod support is available.
 
-If you're seeing this, you've probably already done this step. Congrats!
+The base game in Mice Game is itself a mod, which doesn't actually need to be loaded. If you want to make Mice Game your own, you can easily add to or change the game yourself via a mod, even if you don't know how to code.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+## Is this game just a copy of Kittens Game?
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+This project is heavily inspired by [Kittens Game](https://kittensgame.com), even down to the name. It's my excuse to learn Svelte 5 and its new reactivity features, being that a Kittens-like game leads itself heavily to reactivity. The design of the mechanics in Kittens Game is amazing. You have buildings, resources, and upgrades, all of which can interact with each other in various ways. The mechanics are simple, but the design space is huge. Mice Game is made with this in mind, with a focus on making it easy to create interactions between different game systems.
 
-## Developing
+It's worth noting that Mice Game does not use any code from Kittens Game, as that would be against their [license](https://bitbucket.org/bloodrizer/kitten-game/src/master/license.txt), specifically the line *"Using the game code for commercial gain or creation of derivative works is not permitted."* I consider this to disallow not only copying but *viewing* their code before making changes to Mice Game (see [contributing](https://github.com/lonevox/mice-game/blob/main/CONTRIBUTING.md)).
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+### How is Mice Game different from Kittens Game?
 
-```bash
-npm run dev
+- **Different mechanics.** Mice Game has land usage, combat, and resource transport to name a few. It equally lacks mechanics that are present in Kittens Game, so you'll have a unique experience playing both games.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+- **Mod-centric design.** See [Mods](#mods).
