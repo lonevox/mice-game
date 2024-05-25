@@ -56,9 +56,9 @@
 				<p class="underline">For each {building.displayName}</p>
 				{#each Object.entries(linkedTo) as [gameObjectClass, propertyPairs]}
 					{#each Object.entries(propertyPairs) as [gameObjectName, property]}
-						{#each Object.entries(property) as [propertyName, propertyValue]}
+						{#each Object.entries(property) as [propertyName, link]}
 							{#if propertyName === "maxAmount"}
-								<p class="text-surface-600-300-token">Max {gameObjectName}: {propertyValue.config.operation.argument}</p>
+								<p class="text-surface-600-300-token">Max {gameObjectName}: {link.value}</p>
 							{/if}
 						{/each}
 					{/each}
