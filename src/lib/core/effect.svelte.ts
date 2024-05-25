@@ -62,15 +62,6 @@ export type LinkedPropertyValue = {
 	flat: number,
 	ratio: number,
 }
-// TODO: unsure if it is better to use linkConfigDefaults when making links or if
-//  it is more clear
-// export const linkConfigDefaults: LinkConfig = {
-// 	operation: {
-// 		operator: "*",
-// 		argument: 1,
-// 	},
-// 	type: "flat",
-// }
 
 /**
  * Represents a deeply nested object containing many links. The nesting means that parts of the
