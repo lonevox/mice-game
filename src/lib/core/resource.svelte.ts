@@ -54,7 +54,7 @@ export class Resource extends GameObject {
 			resourceConfig.description ?? "",
 			resourceConfig.links ?? [],
 			["maxAmount", "production"]);
-		$inspect(this.production)
+
 		// Optional properties
 		if (resourceConfig.rarity !== undefined) {
 			this.rarity = resourceConfig.rarity;
