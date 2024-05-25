@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { type Building, getLinks, tryPurchaseBuilding } from '$lib/core/building.svelte';
+	import { type Building, tryPurchaseBuilding } from '$lib/core/building.svelte';
 	import { popup } from '@skeletonlabs/skeleton';
 	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
 	import { Resource, resources } from '$lib/core/resource.svelte';
+	import { getLinks } from '$lib/core/effect.svelte';
 	let { building = $bindable() } = $props<{ building }>();
 
 	function formatBuildingText(building: Building) {
@@ -23,8 +24,6 @@
 		}
 		return formatDecimal(resource.amount) + " / " + formatDecimal(price) + " (" + timeLeft + ")";
 	}
-
-	const link = getLinks();
 </script>
 
 <div>

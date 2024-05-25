@@ -1,5 +1,5 @@
 import { resources } from '$lib/core/resource.svelte';
-import { combineLinks, type Link } from '$lib/core/effect.svelte';
+import type { Link } from '$lib/core/effect.svelte';
 import { GameObject } from '$lib/core/gameObject.svelte';
 
 export type Location = {
@@ -85,74 +85,6 @@ export class Building extends GameObject {
 }
 
 export const buildings = $state<Record<string, Building>>({});
-
-const links = $derived.by(() => {
-	const links: Link[] = [];
-	for (const building of Object.values(buildings)) {
-		links.push(...building.links);
-	}
-	return combineLinks(links);
-});
-/**
- * This is useful for finding all properties that a property links to.
- * @example
- * {
- *   Building: {
- *     "Burrow": {
- *       owned: { // This property effects the following properties...
- *         Resource: {
- *           "Mice": {
- *             maxAmount: multiply(6)
- *           },
- *           "Rats": {
- *             maxAmount: multiply(2)
- *           }
- *         }
- *       }
- *     }
- *   }
- * }
- */
-export function getLinks() {
-	return links;
-}
-
-const linksReversed = $derived.by(() => {
-	const reversedLinks: Link[] = [];
-	for (const building of Object.values(buildings)) {
-		for (const buildingLink of building.links) {
-			reversedLinks.push({
-				from: buildingLink.to,
-				to: buildingLink.from,
-				config: buildingLink.config,
-			});
-		}
-	}
-	return combineLinks(reversedLinks);
-});
-/**
- * This is useful for finding all properties that are linked to a property.
- * @example
- * {
- *   Resource: {
- *     "Mice": {
- *       maxAmount: { // This property is effected by the following...
- *         Building: {
- *           "Burrow": {
- *             owned: multiply(6)
- *           },
- *           "Mouse House": {
- *             owned: multiply(20)
- *           }
- *         }
- *       }
- *     }
- *   }
- * }
- */
-export function getLinksReversed() {
-	return linksReversed;
-}
 
 export function addBuilding(buildingConfig: BuildingConfig) {
 	const building = new Building(buildingConfig);

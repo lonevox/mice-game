@@ -1,5 +1,7 @@
 import type { GameObjectName, GameObjectProperty, PropertyTrios } from '$lib/core/gameObject.svelte';
 import { gameObjectProperty, gameObjectPropertyToString, gameObjectPropertyValue } from '$lib/core/gameObject.svelte';
+import { buildings } from '$lib/core/building.svelte';
+import { resources } from '$lib/core/resource.svelte';
 
 export type Operation = {
 	operator: "*" | "+",
@@ -204,4 +206,78 @@ function computeOperation(fromProperty: GameObjectProperty, operation: Operation
 		default:
 			return operation.operator satisfies never;
 	}
+}
+
+const links = $derived.by(() => {
+	const links: Link[] = [];
+	const gameObjectCollections = [buildings, resources];
+	for (const gameObjectCollection of gameObjectCollections) {
+		for (const gameObject of Object.values(gameObjectCollection)) {
+			links.push(...gameObject.links);
+		}
+	}
+	return combineLinks(links);
+});
+/**
+ * This is useful for finding all properties that a property links to.
+ * @example
+ * {
+ *   Building: {
+ *     "Burrow": {
+ *       owned: { // This property effects the following properties...
+ *         Resource: {
+ *           "Mice": {
+ *             maxAmount: multiply(6)
+ *           },
+ *           "Rats": {
+ *             maxAmount: multiply(2)
+ *           }
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ */
+export function getLinks() {
+	return links;
+}
+
+const linksReversed = $derived.by(() => {
+	const reversedLinks: Link[] = [];
+	const gameObjectCollections = [buildings, resources];
+	for (const gameObjectCollection of gameObjectCollections) {
+		for (const gameObject of Object.values(gameObjectCollection)) {
+			for (const link of gameObject.links) {
+				reversedLinks.push({
+					from: link.to,
+					to: link.from,
+					config: link.config,
+				});
+			}
+		}
+	}
+	return combineLinks(reversedLinks);
+});
+/**
+ * This is useful for finding all properties that are linked to a property.
+ * @example
+ * {
+ *   Resource: {
+ *     "Mice": {
+ *       maxAmount: { // This property is effected by the following...
+ *         Building: {
+ *           "Burrow": {
+ *             owned: multiply(6)
+ *           },
+ *           "Mouse House": {
+ *             owned: multiply(20)
+ *           }
+ *         }
+ *       }
+ *     }
+ *   }
+ * }
+ */
+export function getLinksReversed() {
+	return linksReversed;
 }

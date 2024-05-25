@@ -11,7 +11,7 @@
 			<div class="table-row hover:bg-surface-100-800-token">
 				<div class="table-cell px-1 max-w-16 truncate" style="color: {resource.rarity.color}" title={resource.name.toLowerCase()}>{resource.name.toLowerCase()}</div>
 				<div class="table-cell px-1 min-w-10 text-surface-900-50-token">{formatDecimal(resource.amount)}</div>
-				<div class="table-cell px-1 min-w-10 text-surface-400-500-token">/{resource.maxAmount}</div>
+				<div class="table-cell px-1 min-w-10 text-surface-400-500-token">/{formatDecimal(resource.maxAmount)}</div>
 				<div class="table-cell px-1 min-w-10 text-surface-900-50-token" use:popup={{ event: 'hover', target: 'popupHover-' + resource.name, placement: 'right-start' }}>{formatProduction(resource.production)}</div>
 			</div>
 		{/each}

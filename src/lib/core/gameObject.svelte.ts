@@ -1,6 +1,6 @@
 import type { Link, LinkConfig, LinkedPropertyValue } from '$lib/core/effect.svelte';
-import { buildings, getLinksReversed } from '$lib/core/building.svelte';
-import { computeLinks } from '$lib/core/effect.svelte';
+import { buildings } from '$lib/core/building.svelte';
+import { computeLinks, getLinksReversed } from '$lib/core/effect.svelte';
 import { resources } from '$lib/core/resource.svelte';
 import type { PropertyPairs } from '$lib/core/util.svelte';
 
