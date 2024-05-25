@@ -33,10 +33,11 @@ export function multiply(argument: number): Operation {
  *     name: "Mice",
  *     property: "maxAmount"
  *   },
- *   operation: {
- *     operator: "*",
- *     argument: 6,
- *     type: "flat"
+ *   config: {
+ *     operation: {
+ *       operator: "*",
+ *       argument: 6,
+ *     }
  *   }
  * }
  */
