@@ -1,6 +1,6 @@
 import { resources } from '$lib/core/resource.svelte';
-import type { Link } from '$lib/core/effect.svelte';
-import { GameObject } from '$lib/core/gameObject.svelte';
+import type { LinkablePropertyValue } from '$lib/core/effect.svelte';
+import { GameObject, type GameObjectConfig } from '$lib/core/gameObject.svelte';
 
 export type Location = {
 	name: string,
@@ -20,30 +20,33 @@ export function addLocation(location: Location) {
 	locations[location.name] = location;
 }
 
+type BuildingLinkableProperty = "space" | "priceRatio";
 /**
  * Configures the base values for a Building.
  */
-type BuildingConfig = {
-	name: string,
-	description?: string,
+type BuildingConfig = GameObjectConfig & {
 	location: string,
-	space?: number,
 	owned?: number,
 	price: Record<string, number>,
-	priceRatio?: number,
-	links?: Link[],
+	linkablePropertyBaseValues?: Partial<Record<BuildingLinkableProperty, Partial<LinkablePropertyValue>>>,
+}
+export const defaultBuildingConfig = {
+	linkablePropertyBaseValues: {
+		space: { flat: 1, ratio: 1 },
+		priceRatio: { flat: 1.15, ratio: 1 },
+	},
 }
 export class Building extends GameObject {
 	// State
 	location = $state("");
-	baseSpace = $state(1);
 	owned = $state(0);
 	basePrice = $state<Record<string, number>>({});
-	basePriceRatio = $state(1.15);
+
+	// Linkable properties (defined here only for type benefits)
+	space = $derived(0);
+	priceRatio = $derived(0);
 
 	// Derived
-	space = $derived<number>(this.baseSpace + this.linkedPropertyValues["space"].flat * this.linkedPropertyValues["space"].ratio);
-	priceRatio = $derived<number>(this.basePriceRatio + this.linkedPropertyValues["priceRatio"].flat * this.linkedPropertyValues["priceRatio"].ratio);
 	price = $derived.by(() => {
 		let out = Object.assign({} as Record<string, number>, this.basePrice);
 		for (let i = 0; i < this.owned; i++) {
@@ -63,23 +66,14 @@ export class Building extends GameObject {
 	});
 
 	constructor(buildingConfig: BuildingConfig) {
-		super(buildingConfig.name,
-			buildingConfig.description ?? "",
-			buildingConfig.links ?? [],
-			["space", "priceRatio"]);
+		super(buildingConfig, ["space", "priceRatio"]);
 
 		this.location = buildingConfig.location;
 		this.basePrice = buildingConfig.price;
 
 		// Optional properties
-		if (buildingConfig.space !== undefined) {
-			this.baseSpace = buildingConfig.space;
-		}
 		if (buildingConfig.owned !== undefined) {
 			this.owned = buildingConfig.owned;
-		}
-		if (buildingConfig.priceRatio !== undefined) {
-			this.basePriceRatio = buildingConfig.priceRatio;
 		}
 	}
 }

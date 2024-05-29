@@ -2,7 +2,7 @@
 
 import {
 	addBuilding,
-	addLocation,
+	addLocation, defaultBuildingConfig,
 	locationDefaults
 } from '$lib/core/building.svelte';
 import { addResource, rarities } from '$lib/core/resource.svelte';
@@ -30,6 +30,7 @@ export function load() {
 
 	// Rath
 	addBuilding({
+		...defaultBuildingConfig,
 		name: "Burrow",
 		location: "Rath",
 		owned: 1,
@@ -43,30 +44,35 @@ export function load() {
 		],
 	});
 	addBuilding({
+		...defaultBuildingConfig,
 		name: "Foraging Zone",
 		description: "An area reserved for poking around.",
 		location: "Rath",
-		space: 2,
 		price: {
 			"Grain": 10,
 		},
+		linkablePropertyBaseValues: {
+			space: {
+				flat: 2,
+			},
+		},
 		links: [
 			Link.of("Building.Foraging Zone.owned", "Resource.Grain.production", {
-				operation: multiply(1),
+				operation: multiply(3),
 			}),
 		],
 	});
 	addBuilding({
+		...defaultBuildingConfig,
 		name: "Fortified Stump",
 		description: "Castle on a hill of wood.",
 		location: "Rath",
-		space: 2,
 		price: {
 			"Grain": 10,
 		},
 		links: [
 			Link.of("Building.Fortified Stump.owned", "Resource.Grain.production", {
-				operation: multiply(0.05),
+				operation: multiply(-0.05),
 				alternativeType: "ratio",
 			}),
 		],
@@ -74,13 +80,26 @@ export function load() {
 
 	// Nib
 	addBuilding({
+		...defaultBuildingConfig,
 		name: "Rover Factory",
 		description: "Produces rovers to explore Nib.",
 		location: "Nib",
-		space: 2,
 		price: {
 			"Grain": 10,
 		},
+		linkablePropertyBaseValues: {
+			space: {
+				flat: 2,
+			},
+		},
+		links: [
+			Link.of("Building.Rover Factory.owned", "Resource.Grain.production", {
+				operation: multiply(1),
+			}),
+			Link.of("Building.Rover Factory.owned", "Resource.Mice.maxAmount", {
+				operation: multiply(-6),
+			}),
+		],
 	});
 
 	//// Resources ////
@@ -89,8 +108,12 @@ export function load() {
 		name: "Grain",
 		description: "Food for your mice.",
 		rarity: rarities.Common,
-		maxAmount: 100,
 		amount: 20,
+		linkablePropertyBaseValues: {
+			maxAmount: {
+				flat: 100,
+			},
+		},
 	});
 	addResource({
 		name: "Mice",

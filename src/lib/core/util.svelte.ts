@@ -36,18 +36,18 @@ export function formatDecimal(input: number, decimalPlaces: number = 2): string 
 	return input.toFixed(decimalPlaces);
 }
 
-export function formatProduction(production: number): string {
-	if (production > 0) {
-		return "+" + formatDecimal(production) + "/s";
+export function formatPerSecondNumber(input: number): string {
+	if (input > 0) {
+		return "+" + formatDecimal(input) + "/s";
 	}
-	if (production < 0) {
-		return "-" + formatDecimal(production) + "/s";
+	if (input < 0) {
+		return formatDecimal(input) + "/s";
 	}
 	return "";
 }
 
 /**
- * Formats the ratio into a percentage string.
+ * Formats the ratio into a percentage changed string.
  *
  * Here's some example inputs and outputs:
  * - 1 -> ""
@@ -55,13 +55,13 @@ export function formatProduction(production: number): string {
  * - 0.5 -> "-50%"
  * @param ratio The number to format.
  */
-export function formatRatioAsPercentage(ratio: number): string {
-	const percentageChange = (ratio * 100) - 100;
+export function formatRatioAsPercentageChanged(ratio: number): string {
+	const percentageChange = (ratio - 1) * 100;
 	if (percentageChange > 0) {
 		return "+" + percentageChange.toFixed(0) + "%";
 	}
 	if (percentageChange < 0) {
-		return "-" + percentageChange.toFixed(0) + "%";
+		return percentageChange.toFixed(0) + "%";
 	}
 	return "";
 }
@@ -97,4 +97,15 @@ export function formatTimeLeft(seconds: number): string {
 			return out + formatDecimal(s, 1) + "s";
 		}
 		return out + Math.floor(s) + "s";
+}
+
+/**
+ * Formats a camel case string into a title case string.
+ *
+ * E.g. "myCoolString" -> "My Cool String"
+ * @param camelCaseString The camel case string to convert to a title case string.
+ */
+export function camelCaseToTitleCase(camelCaseString: string) {
+	const result = camelCaseString.replace(/([A-Z])/g, ' $1');
+	return result.charAt(0).toUpperCase() + result.slice(1);
 }

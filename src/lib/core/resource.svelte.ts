@@ -1,5 +1,5 @@
-import type { Link } from '$lib/core/effect.svelte';
-import { GameObject } from '$lib/core/gameObject.svelte';
+import { GameObject, type GameObjectConfig } from '$lib/core/gameObject.svelte';
+import type { LinkablePropertyValue } from '$lib/core/effect.svelte';
 
 export type Rarity = {
 	name: string,
@@ -24,36 +24,28 @@ export const categoryDefaults = {
 	open: false,
 }
 
+type ResourceLinkableProperty = "maxAmount" | "production";
 /**
  * Configures the base values for a Resource.
  */
-type ResourceConfig = {
-	name: string,
-	description?: string,
+type ResourceConfig = GameObjectConfig & {
 	rarity?: Rarity,
 	category?: ResourceCategory,
 	amount?: number,
-	maxAmount?: number,
-	production?: number,
-	links?: Link[],
+	linkablePropertyBaseValues?: Partial<Record<ResourceLinkableProperty, Partial<LinkablePropertyValue>>>,
 }
 export class Resource extends GameObject {
 	// State
 	rarity = $state<Rarity>(rarities.Common);
 	category = $state<ResourceCategory>();
 	amount = $state(0);
-	baseMaxAmount = $state(0);
-	baseProduction = $state(0);
 
-	// Derived
-	maxAmount = $derived<number>(this.baseMaxAmount + this.linkedPropertyValues["maxAmount"].flat * this.linkedPropertyValues["maxAmount"].ratio);
-	production = $derived<number>(this.baseProduction + this.linkedPropertyValues["production"].flat * this.linkedPropertyValues["production"].ratio);
+	// Linkable properties (defined here only for type benefits)
+	maxAmount = $derived(0);
+	production = $derived(0);
 
 	constructor(resourceConfig: ResourceConfig) {
-		super(resourceConfig.name,
-			resourceConfig.description ?? "",
-			resourceConfig.links ?? [],
-			["maxAmount", "production"]);
+		super(resourceConfig, ["maxAmount", "production"]);
 
 		// Optional properties
 		if (resourceConfig.rarity !== undefined) {
@@ -64,12 +56,6 @@ export class Resource extends GameObject {
 		}
 		if (resourceConfig.amount !== undefined) {
 			this.amount = resourceConfig.amount;
-		}
-		if (resourceConfig.maxAmount !== undefined) {
-			this.baseMaxAmount = resourceConfig.maxAmount;
-		}
-		if (resourceConfig.production !== undefined) {
-			this.baseProduction = resourceConfig.production;
 		}
 	}
 }

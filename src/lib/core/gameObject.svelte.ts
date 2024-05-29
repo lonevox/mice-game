@@ -1,9 +1,18 @@
-import type { Link, LinkConfig, LinkedPropertyValue } from '$lib/core/effect.svelte';
+import type { Link, LinkablePropertyValue } from '$lib/core/effect.svelte';
 import { buildings } from '$lib/core/building.svelte';
-import { computeLinks, getLinksReversed } from '$lib/core/effect.svelte';
+import { computeLinks, getLinks, getLinksReversed } from '$lib/core/effect.svelte';
 import { resources } from '$lib/core/resource.svelte';
 import type { PropertyPairs } from '$lib/core/util.svelte';
 
+/**
+ * Configures the values for a GameObject.
+ */
+export type GameObjectConfig = {
+	name: string,
+	description?: string,
+	linkablePropertyBaseValues?: Record<string, Partial<LinkablePropertyValue>>,
+	links?: Link[],
+}
 export abstract class GameObject {
 	/**
 	 * Used as an identifier, so shouldn't be changed. Change displayName instead.
@@ -15,37 +24,76 @@ export abstract class GameObject {
 	description = $state("");
 
 	// Links that this GameObject creates
-	links: Link[] = [];
+	links: Link[];
+
+	incomingLinks = $derived<Link[]>(getLinks().filter(l => l.to.class === this.constructor.name && l.to.name === this.name));
+	outgoingLinks = $derived<Link[]>(getLinks().filter(l => l.from.class === this.constructor.name && l.from.name === this.name));
 
 	/**
-	 * The values of properties that can be linked to.
-	 * This is automatically populated when you pass linkedProperties into the GameObject constructor.
+	 * The values of change for properties that can be linked to. The change is determined by links to the property.
+	 * This is automatically populated when you pass linkableProperties into the GameObject constructor.
 	 */
-	linkedPropertyValues: Record<string, LinkedPropertyValue> = {};
+	linkablePropertyChangeValues: Record<string, LinkablePropertyValue> = {};
+	/**
+	 * The base values of properties that can be linked to.
+	 * This is automatically populated with default values when you pass linkableProperties into the GameObject
+	 * constructor. The values can be overridden by passing config.linkablePropertyBaseValues into the GameObject
+	 * constructor.
+	 */
+	linkablePropertyBaseValues = $state<Record<string, LinkablePropertyValue>>({});
 
-	protected constructor(name: string, description: string = "", links: Link[] = [], linkedProperties: string[] = []) {
-		this.name = name;
+	protected constructor(config: GameObjectConfig, linkableProperties: string[] = []) {
+		this.name = config.name;
 		this.displayName = this.name;
-		this.description = description;
-		this.links = links;
-		this.createLinkedProperties(linkedProperties);
+		this.description = config.description ?? "";
+		this.links = config.links ?? [];
+		this.createLinkableProperties(linkableProperties);
+		// Overwrite linkable property base values with values from config
+		if (config.linkablePropertyBaseValues !== undefined) {
+			for (const [property, value] of Object.entries(config.linkablePropertyBaseValues)) {
+				if (value.flat !== undefined) {
+					this.linkablePropertyBaseValues[property].flat = value.flat;
+				}
+				if (value.ratio !== undefined) {
+					this.linkablePropertyBaseValues[property].ratio = value.ratio;
+				}
+			}
+		}
 	}
 
-	private createLinkedProperties(propertyNames: string[]) {
+	private createLinkableProperties(propertyNames: string[]) {
 		const className = this.constructor.name;
 		for (const propertyName of propertyNames) {
-			// Create a property in this.linkedPropertyValues that is derived from all the properties that link to it.
-			const value = $derived.by<LinkedPropertyValue>(() => {
-				const fromProperties = getLinksReversed()[className]?.[this.name]?.[propertyName] as PropertyTrios<Link> | undefined;
-				if (fromProperties !== undefined) {
-					return computeLinks(fromProperties);
-				}
-				return { flat: 0, ratio: 1 };
+			// Create a property in this.linkablePropertyChangeValues that is derived from all the properties that link to the property.
+			const valueFromLinks = $derived.by<LinkablePropertyValue>(() => {
+				const fromProperties = getLinksToGameObjectProperty({
+					class: className as GameObjectName,
+					name: this.name,
+					property: propertyName
+				});
+				return computeLinks(fromProperties);
 			});
-			Object.defineProperty(this.linkedPropertyValues, propertyName, {
-				get: () => { return value; },
+			Object.defineProperty(this.linkablePropertyChangeValues, propertyName, {
+				get: () => { return valueFromLinks; },
+			});
+
+			// Create a property in this.linkablePropertyBaseValues with a default value.
+			Object.defineProperty(this.linkablePropertyBaseValues, propertyName, {
+				value: { flat: 0, ratio: 1 },
+			});
+
+			// Derive linkable property.
+			const finalPropertyValue = $derived<number>(
+				(this.linkablePropertyBaseValues[propertyName].flat + this.linkablePropertyChangeValues[propertyName].flat)
+				* (this.linkablePropertyBaseValues[propertyName].ratio + this.linkablePropertyChangeValues[propertyName].ratio));
+			Object.defineProperty(this, propertyName, {
+				get: () => { return finalPropertyValue; }
 			});
 		}
+	}
+
+	getLinksToProperty(property: string): Link[] {
+		return this.incomingLinks.filter(l => l.to.property === property);
 	}
 }
 
@@ -101,6 +149,14 @@ export function gameObjectProperty(from: string): GameObjectProperty {
 		throw new Error("Failed to create GameObjectProperty from string. '" + className +
 			"' isn't a valid game object name.");
 	}
+}
+
+export function getLinksToGameObjectProperty(gop: GameObjectProperty): PropertyTrios<Link> {
+	const links = getLinksReversed()[gop.class]?.[gop.name]?.[gop.property] as PropertyTrios<Link> | undefined;
+	if (links === undefined) {
+		return {};
+	}
+	return links;
 }
 
 export function createDerivedFromGameObjectProperty(gop: GameObjectProperty): { readonly value: number } {

@@ -76,7 +76,7 @@ export type LinkConfig = {
 	alternativeType?: "ratio",
 	cap?: number,
 }
-export type LinkedPropertyValue = {
+export type LinkablePropertyValue = {
 	flat: number,
 	ratio: number,
 }
@@ -207,10 +207,10 @@ export function combineLinksReversed(links: Link[]): Links {
 	return outLinks;
 }
 
-export function computeLinks(links: PropertyTrios<Link>): LinkedPropertyValue {
-	let out: LinkedPropertyValue = {
+export function computeLinks(links: PropertyTrios<Link>): LinkablePropertyValue {
+	let out: LinkablePropertyValue = {
 		flat: 0,
-		ratio: 1,
+		ratio: 0,
 	};
 	for (const propertyPairs of Object.values(links)) {
 		for (const properties of Object.values(propertyPairs)) {
