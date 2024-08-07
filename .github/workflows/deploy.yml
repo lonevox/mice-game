@@ -18,7 +18,8 @@ jobs:
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        # TODO: --force should be removed when Skeleton becomes officially compatible with Svelte 5
+        run: npm install --force
 
       - name: build
         env:
