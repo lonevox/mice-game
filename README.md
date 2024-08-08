@@ -1,5 +1,7 @@
 # Mice Game
 
+You can play the latest build of the game [here](https://lonevox.github.io/mice-game/)! Note that it is in early development, so there isn't much gameplay at the moment.
+
 ## Mods
 
 > [!NOTE]  
