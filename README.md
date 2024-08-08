@@ -1,13 +1,25 @@
 # Mice Game
 
+> [!WARNING]  
+> Building reactivity is currently broken in production, making it unplayable. Clone the repo and run `npm run dev` to play.
+
 You can play the latest build of the game [here](https://lonevox.github.io/mice-game/)! Note that it is in early development, so there isn't much gameplay at the moment.
 
-## Mods
+## Overview
 
-> [!NOTE]  
-> Mod support is still in development. Documentation will be available on the wiki when mod support is available.
+*You are a mouse in a field of grain.* From here, you must expand into a mouse empire and conquer the stars.
 
-The base game in Mice Game is itself a mod, which doesn't actually need to be loaded. If you want to make Mice Game your own, you can easily add to or change the game yourself via a mod, even if you don't know how to code.
+Mouse Game is a web incremental game with maximum complexity and minimal fluff (besides the mice, they're fluffy!). The key gameplay components are:
+- Resources. Everything you have is a reource, including your Mice!
+- Buildings. These consume resources to build, but many buildings can produce resources in return. Some buildings may improve the effect of other buildings, or increase your resource storage, or modify mechanics, etc.
+- Upgrades. The concrete accomplishments of your mouse empire. Upgrades modify any and every mechanic in the game. They are also the primary way that new mechanics are introduced.
+- Combat. There aren't just mice in this world... Conquer different species to expand your empire in new lands.
+- Events. Randomly, an event may occur. They can be positive, like a scientific breakthrough, or negative, like a crop failure.
+
+The gameplay components are simple, but complexity emerges when everything interacts with each other. To help manage this complexity, there are some helpful UI features. For example, you can hover over resource storage or production values to get a breakdown of what makes up these values:
+
+![image](https://github.com/user-attachments/assets/a8af8544-bc88-482c-ab35-6509340265b8)
+
 
 ## Is this game just a copy of Kittens Game?
 
@@ -20,3 +32,10 @@ It's worth noting that Mice Game does not use any code from Kittens Game, as tha
 - **Different mechanics.** Mice Game has land usage, combat, and resource transport to name a few. It equally lacks mechanics that are present in Kittens Game, so you'll have a unique experience playing both games.
 
 - **Mod-centric design.** See [Mods](#mods).
+
+## Mods
+
+> [!NOTE]  
+> Mod support is still in development. Documentation will be available on the wiki when mod support is available.
+
+The base game in Mice Game is itself a mod, which doesn't actually need to be loaded. If you want to make Mice Game your own, you can easily add to or change the game yourself via a mod, even if you don't know how to code.
