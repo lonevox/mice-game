@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { type Building, tryPurchaseBuilding } from '$lib/core/building.svelte';
-	import { popup } from '@skeletonlabs/skeleton';
 	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
 	import { Resource, resources } from '$lib/core/resource.svelte';
 	import { getLinksDeep } from '$lib/core/effect.svelte';
@@ -27,9 +26,9 @@
 </script>
 
 <div>
-	<div class="btn-group variant-ghost w-full" use:popup={{ event: 'hover', target: 'popupHover-' + building.name, placement: 'right-start' }}>
+	<div class=" preset-tonal border border-surface-500 w-full" use:popup={{ event: 'hover', target: 'popupHover-' + building.name, placement: 'right-start' }}>
 		<button
-			class="variant-filled-surface w-full"
+			class="preset-filled-surface-500 w-full"
 			style={!building.canAfford ? 'cursor: default !important' : ''}
 			disabled={!building.canAfford}
 			onclick={() => tryPurchaseBuilding(building)}
@@ -58,13 +57,13 @@
 					{#each Object.entries(propertyPairs) as [gameObjectName, property]}
 						{#each Object.entries(property) as [propertyName, link]}
 							{#if propertyName === "maxAmount"}
-								<p class="text-surface-600-300-token">Max {gameObjectName}: {link.value}</p>
+								<p class="text-surface-700-300">Max {gameObjectName}: {link.value}</p>
 							{/if}
 						{/each}
 					{/each}
 				{/each}
 			{/if}
 		{/each}
-		<div class="arrow bg-surface-100-800-token"></div>
+		<div class="arrow bg-surface-100-900"></div>
 	</div>
 </div>

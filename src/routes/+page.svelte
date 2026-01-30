@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Tab, TabGroup } from '@skeletonlabs/skeleton';
+	import { Tab, Tabs } from '@skeletonlabs/skeleton-svelte';
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
 	import { load } from '$lib/baseGame.svelte';
@@ -19,7 +19,7 @@
 		<Resources />
 	</div>
 	<div class="basis-1/2">
-		<TabGroup>
+		<Tabs>
 			<Tab bind:group={tabSet} name="tab1" value={0} class="font-bold">Field</Tab>
 			<Tab bind:group={tabSet} name="tab2" value={1} class="font-bold">Society</Tab>
 			<svelte:fragment slot="panel">
@@ -29,7 +29,7 @@
 					(tab panel 2 contents)
 				{/if}
 			</svelte:fragment>
-		</TabGroup>
+		</Tabs>
 	</div>
 	<div class="basis-1/4">
 		<Log />

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../app.css';
 	import { computePosition, autoUpdate, offset, shift, flip, arrow } from '@floating-ui/dom';
-	import { setInitialClassState, storePopup } from '@skeletonlabs/skeleton';
 	import { onMount } from 'svelte';
 
 	onMount(() => {

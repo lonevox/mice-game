@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { AppBar, LightSwitch, popup } from '@skeletonlabs/skeleton';
+	import { AppBar } from '@skeletonlabs/skeleton-svelte';
 	import Fa6SolidCaretDown from 'virtual:icons/fa6-solid/caret-down';
 	import Fa6BrandsGithub from 'virtual:icons/fa6-brands/github';
 	import Fa6BrandsDiscord from 'virtual:icons/fa6-brands/discord';
@@ -30,12 +30,12 @@
 	});
 </script>
 
-<AppBar background="bg-surface-50-900-token" padding="px-4 py-1" slotLead="space-x-4" slotTrail="space-x-2!">
+<AppBar background="bg-surface-50-950" padding="px-4 py-1" slotLead="space-x-4" slotTrail="space-x-2!">
 	<svelte:fragment slot="lead">
 		<p>Mice Game</p>
 		<div class="text-xs">
-			<span class="text-surface-500-400-token">Inspired by </span>
-			<a class="hover:underline text-surface-700-200-token" href="https://kittensgame.com" target="_blank" rel="noreferrer">
+			<span class="text-surface-600-400">Inspired by </span>
+			<a class="hover:underline text-surface-800-200" href="https://kittensgame.com" target="_blank" rel="noreferrer">
 				Kittens Game
 			</a>
 		</div>
@@ -43,7 +43,7 @@
 	<svelte:fragment slot="trail">
 		<div>
 			<!-- trigger -->
-			<button class="btn btn-sm hover:variant-soft-primary space-x-1" use:popup={{ event: 'click', target: 'theme', closeQuery: 'a[href]' }}>
+			<button class="btn btn-sm hover:preset-tonal-primary space-x-1" use:popup={{ event: 'click', target: 'theme', closeQuery: 'a[href]' }}>
 				<span>Theme</span>
 				<Fa6SolidCaretDown class="opacity-50"/>
 			</button>
@@ -60,7 +60,7 @@
 							<!-- , badge -->
 							{#each themes as { icon, name, type }}
 								<li>
-									<button class="option w-full h-full" onclick={() => theme = type} class:bg-primary-active-token={theme === type}>
+									<button class="option w-full h-full" onclick={() => theme = type} class:preset-filled-primary-500={theme === type}>
 										<span>{icon}</span>
 										<span class="flex-auto text-left">{name}</span>
 									</button>
@@ -73,7 +73,7 @@
 		</div>
 		<!-- external links -->
 		<section class="space-x-1">
-			<a class="btn-icon btn-icon-sm hover:variant-soft-primary" href="https://github.com/lonevox/mice-game" target="_blank" rel="noreferrer">
+			<a class="btn-icon btn-icon-sm hover:preset-tonal-primary" href="https://github.com/lonevox/mice-game" target="_blank" rel="noreferrer">
 				<Fa6BrandsGithub />
 			</a>
 <!--			TODO: Future discord server link-->

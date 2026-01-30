@@ -72,11 +72,11 @@
 
 <div class="space-y-1">
 	<h4 class="h4">Resources</h4>
-	<div class="mx-auto w-96 grid grid-cols-[minmax(0,auto)_4.5rem_5rem_6rem] gap-x-2 gap-y-1 border-4 rounded-md border-surface-50-900-token bg-surface-50-900-token">
+	<div class="mx-auto w-96 grid grid-cols-[minmax(0,auto)_4.5rem_5rem_6rem] gap-x-2 gap-y-1 border-4 rounded-md border-surface-50-950 bg-surface-50-950">
 		{#each Object.values(resources) as resource}
 			<!-- Name -->
 			<div
-				class="truncate hover:bg-surface-100-800-token"
+				class="truncate hover:bg-surface-100-900"
 				style="color: {resource.rarity.color}"
 				onmouseenter={e => setPopup(e, "Name", resource)}
 				onmouseleave={() => hidePopup()}
@@ -84,18 +84,18 @@
 			>{resource.name.toLowerCase()}</div>
 			<!-- Amount -->
 			<div
-				class="text-surface-900-50-token hover:bg-surface-100-800-token"
+				class="text-surface-950-50 hover:bg-surface-100-900"
 			>{formatDecimal(resource.amount)}</div>
 			<!-- Max amount -->
 			<div
-				class="text-surface-400-500-token hover:bg-surface-100-800-token"
+				class="text-surface-500 hover:bg-surface-100-900"
 				onmouseenter={e => onMouseEnterPropertyCell(e, resource, "maxAmount")}
 				onmouseleave={() => hidePopup()}
 				role="tooltip"
 			>/{formatDecimal(resource.maxAmount)}</div>
 			<!-- Production -->
 			<div
-				class="text-surface-900-50-token hover:bg-surface-100-800-token"
+				class="text-surface-950-50 hover:bg-surface-100-900"
 				onmouseenter={e => onMouseEnterPropertyCell(e, resource, "production")}
 				onmouseleave={() => hidePopup()}
 				role="tooltip"
