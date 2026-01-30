@@ -30,7 +30,7 @@
 	});
 </script>
 
-<AppBar background="bg-surface-50-900-token" padding="px-4 py-1" slotLead="space-x-4" slotTrail="!space-x-2">
+<AppBar background="bg-surface-50-900-token" padding="px-4 py-1" slotLead="space-x-4" slotTrail="space-x-2!">
 	<svelte:fragment slot="lead">
 		<p>Mice Game</p>
 		<div class="text-xs">

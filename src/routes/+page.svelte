@@ -14,7 +14,7 @@
 </script>
 
 <AppBar />
-<div class="flex flex-row max-w-screen-2xl mx-auto mt-3 space-x-8">
+<div class="flex flex-row max-w-(--breakpoint-2xl) mx-auto mt-3 space-x-8">
 	<div class="basis-1/4">
 		<Resources />
 	</div>
