@@ -27,8 +27,9 @@
 	<div class="basis-1/2">
 		<Tabs defaultValue="tab1">
 			<Tabs.List>
-				<Tabs.Trigger value="tab1" class="font-bold">Field</Tabs.Trigger>
-				<Tabs.Trigger value="tab2" class="font-bold">Society</Tabs.Trigger>
+				<Tabs.Trigger value="tab1">Field</Tabs.Trigger>
+				<Tabs.Trigger value="tab2">Society</Tabs.Trigger>
+				<Tabs.Indicator />
 			</Tabs.List>
 			<Tabs.Content value="tab1">
 				<LocationTab />
