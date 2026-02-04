@@ -1,29 +1,4 @@
 /**
- * Represents properties with T being their value type.
- * The shape of the type is:
- * @example
- * {
- *   objectName: {
- *     objectProperty: T
- *   }
- * }
- */
-export type PropertyPairs<T> = Record<string, Record<string, T>>;
-
-/**
- * Returns a getter for the result of a derived function.
- * The getter always returns the most recently computed value. This is useful if you want to have a
- * property with a derived value, as the {@link $derived} rune can only be applied to variable declarations.
- * @param fn
- */
-export function derived<T>(fn: () => T) {
-	let value = $derived.by<T>(fn);
-	return {
-		get value() { return value; }
-	}
-}
-
-/**
  * Formats a number into a string with a given number of decimal places. Unlike {@link Number.toFixed},
  * if the input is a whole number then it won't be formatted with decimal places.
  * @param input The number to format.

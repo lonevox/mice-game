@@ -1,69 +1,114 @@
 <script lang="ts">
-	import { type Building, tryPurchaseBuilding } from '$lib/core/building.svelte';
-	import { formatDecimal, formatTimeLeft } from '$lib/core/util.svelte.js';
-	import { Resource, resources } from '$lib/core/resource.svelte';
-	import { getLinksDeep } from '$lib/core/effect.svelte';
-	let { building = $bindable() } = $props<{ building }>();
+	import { type Building, BuildingService } from '$lib/base_game/data_components/building.js';
+	import { formatDecimal, formatTimeLeft } from '$lib/core/util/stringFormatting.js';
+	import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
+	import { Game } from '$lib/core/game';
 
-	function formatBuildingText(building: Building) {
-		if (building.owned > 0) {
-			return building.displayName + " (" + building.owned + ")";
-		}
-		return building.displayName;
+	interface Props {
+		building: Building;
 	}
 
-	function formatResourcePrice(resource: Resource, price: number): string {
-		if (resource.amount > price) {
+	let { building }: Props = $props();
+
+	const canAfford = $derived(BuildingService.canAfford(building));
+
+	function formatBuildingText(building: Building): string {
+		if (building.amount.computed > 0) {
+			return `${building.name} (${building.amount.computed})`;
+		}
+		return building.name;
+	}
+
+	function formatResourcePrice(resourceAmount: number, resourceProduction: number, price: number): string {
+		if (resourceAmount >= price) {
 			return formatDecimal(price);
 		}
-		const secondsLeft = (price - resource.amount) / resource.production;
-		const timeLeft = formatTimeLeft(secondsLeft);
-		if (timeLeft === "") {
-			return formatDecimal(resource.amount) + " / " + formatDecimal(price)
+		if (resourceProduction <= 0) {
+			return `${formatDecimal(resourceAmount)} / ${formatDecimal(price)}`;
 		}
-		return formatDecimal(resource.amount) + " / " + formatDecimal(price) + " (" + timeLeft + ")";
+		const secondsLeft = (price - resourceAmount) / resourceProduction;
+		const timeLeft = formatTimeLeft(secondsLeft);
+		if (timeLeft === '') {
+			return `${formatDecimal(resourceAmount)} / ${formatDecimal(price)}`;
+		}
+		return `${formatDecimal(resourceAmount)} / ${formatDecimal(price)} (${timeLeft})`;
+	}
+
+	function handleBuy() {
+		BuildingService.buy(building);
+	}
+
+	function handleSell() {
+		BuildingService.sell(building);
+		console.log('sell');
 	}
 </script>
 
-<div>
-	<div class=" preset-tonal border border-surface-500 w-full" use:popup={{ event: 'hover', target: 'popupHover-' + building.name, placement: 'right-start' }}>
-		<button
-			class="preset-filled-surface-500 w-full"
-			style={!building.canAfford ? 'cursor: default !important' : ''}
-			disabled={!building.canAfford}
-			onclick={() => tryPurchaseBuilding(building)}
-		>
-			{formatBuildingText(building)}
-		</button>
-		{#if building.owned > 0}
-			<button onclick={() => building.owned -= 1}>Sell</button>
-		{/if}
-	</div>
-	<div class="card p-4 w-72 shadow-xl space-y-2 z-10 duration-0" data-popup={"popupHover-" + building.name}>
-		<p>{building.description}</p>
-		<hr />
-		{#each Object.entries(building.price) as [resourceName, price]}
-			<div class="flex">
-				<p class="flex-none">{resourceName.toLowerCase()}</p>
-				<p class="flex-1 text-right" class:text-error-400={price > resources[resourceName].amount}>{formatResourcePrice(resources[resourceName], price)}</p>
-			</div>
-		{/each}
-		<hr />
-		<p class="text-center font-bold">Effects</p>
-		{#each Object.entries(getLinksDeep()["Building"]?.[building.name] ?? []) as [fromPropertyName, linkedTo]}
-			{#if fromPropertyName === "owned"}
-				<p class="underline">For each {building.displayName}</p>
-				{#each Object.entries(linkedTo) as [gameObjectClass, propertyPairs]}
-					{#each Object.entries(propertyPairs) as [gameObjectName, property]}
-						{#each Object.entries(property) as [propertyName, link]}
-							{#if propertyName === "maxAmount"}
-								<p class="text-surface-700-300">Max {gameObjectName}: {link.value}</p>
-							{/if}
-						{/each}
-					{/each}
-				{/each}
+<Tooltip positioning={{ placement: 'right-start' }} openDelay={0} closeDelay={0} closeOnClick={false}
+				 closeOnPointerDown={false} closeOnEscape={false} closeOnScroll={false}>
+	<Tooltip.Trigger class="w-full">
+		<div class="preset-tonal border border-surface-500 w-full flex">
+			<button
+				class="preset-filled-surface-500 flex-1 px-3 py-2"
+				class:opacity-50={!canAfford}
+				class:cursor-default={!canAfford}
+				onclick={handleBuy}
+			>
+				{formatBuildingText(building)}
+			</button>
+			{#if building.amount.computed > 0}
+				<button class="btn" onclick={handleSell}>Sell</button>
 			{/if}
-		{/each}
-		<div class="arrow bg-surface-100-900"></div>
-	</div>
-</div>
+		</div>
+	</Tooltip.Trigger>
+	<Portal>
+		<Tooltip.Positioner>
+			<Tooltip.Content class="card bg-surface-100-900 p-4 w-72 shadow-xl space-y-2 z-10">
+				<!-- Description -->
+				{#if building.description}
+					<p>{building.description}</p>
+					<hr class="opacity-50" />
+				{/if}
+
+				<!-- Costs -->
+				<p class="font-bold text-sm">Cost</p>
+				{#each building.basePrice as cost}
+					{@const scaledPrice = BuildingService.getScaledPrice(building, cost)}
+					{@const resourceAmount = cost.resource.amount.computed}
+					{@const resourceProduction = cost.resource.production.computed}
+					<div class="flex justify-between">
+						<span>{cost.resource.icon} {cost.resource.name.toLowerCase()}</span>
+						<span
+							class:text-error-400={resourceAmount < scaledPrice}
+						>
+              {formatResourcePrice(resourceAmount, resourceProduction, scaledPrice)}
+            </span>
+					</div>
+				{/each}
+
+				<!-- Effects -->
+				{@const linksFrom = Game.registry.getLinksFrom(building.amount.id)}
+				{#if linksFrom.length > 0}
+					<hr class="opacity-50" />
+					<p class="font-bold text-sm">Effects (per building)</p>
+					{#each linksFrom as link}
+						{@const label = link.metadata?.label ?? link.to}
+						{@const description = link.metadata?.description}
+						<div class="text-surface-400 text-sm">
+							{#if link.type === 'add'}
+								<span>+{link.coefficient ?? 1} {label}</span>
+							{:else if link.type === 'multiply'}
+								<span>×{link.coefficient ?? 1} {label}</span>
+							{:else}
+								<span>{link.type} {link.coefficient ?? 1} {label}</span>
+							{/if}
+							{#if description}
+								<p class="text-xs text-surface-500">{description}</p>
+							{/if}
+						</div>
+					{/each}
+				{/if}
+			</Tooltip.Content>
+		</Tooltip.Positioner>
+	</Portal>
+</Tooltip>

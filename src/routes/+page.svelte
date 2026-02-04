@@ -1,16 +1,22 @@
 <script lang="ts">
-	import { Tab, Tabs } from '@skeletonlabs/skeleton-svelte';
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
-	import { load } from '$lib/baseGame.svelte';
+	import { data } from '$lib/base_game/baseGame.js';
 	import Log from '$lib/components/Log.svelte';
 	import AppBar from '$lib/components/AppBar.svelte';
-	import { start } from '$lib/core/game';
+	import { Game } from '$lib/core/game';
+	import { onDestroy, onMount } from 'svelte';
 
-	load();
-	start();
+	Game.loadMods([data]);
 
-	let tabSet = $state<number>(0);
+	onMount(() => {
+		Game.start();
+	});
+
+	onDestroy(() => {
+		Game.stop();
+	});
 </script>
 
 <AppBar />
@@ -19,16 +25,17 @@
 		<Resources />
 	</div>
 	<div class="basis-1/2">
-		<Tabs>
-			<Tab bind:group={tabSet} name="tab1" value={0} class="font-bold">Field</Tab>
-			<Tab bind:group={tabSet} name="tab2" value={1} class="font-bold">Society</Tab>
-			<svelte:fragment slot="panel">
-				{#if tabSet === 0}
-					<LocationTab />
-				{:else if tabSet === 1}
-					(tab panel 2 contents)
-				{/if}
-			</svelte:fragment>
+		<Tabs defaultValue="tab1">
+			<Tabs.List>
+				<Tabs.Trigger value="tab1" class="font-bold">Field</Tabs.Trigger>
+				<Tabs.Trigger value="tab2" class="font-bold">Society</Tabs.Trigger>
+			</Tabs.List>
+			<Tabs.Content value="tab1">
+				<LocationTab />
+			</Tabs.Content>
+			<Tabs.Content value="tab2">
+				(tab panel 2 contents)
+			</Tabs.Content>
 		</Tabs>
 	</div>
 	<div class="basis-1/4">
