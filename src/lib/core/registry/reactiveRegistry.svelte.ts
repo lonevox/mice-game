@@ -94,20 +94,20 @@ export class ReactiveRegistry<
 
 	// ============ DataComponent Methods ============
 
-	register<K extends keyof TRegistry>(type: K, id: string, instance: TRegistry[K] & TBase): void {
+	register<K extends keyof TRegistry>(type: K, id: string, instance: TRegistry[K]): void {
 		if (!this.instances.has(type as string)) {
 			this.instances.set(type as string, new Map());
 		}
 		this.instances.get(type as string)!.set(id, instance);
 	}
 
-	get<K extends keyof TRegistry>(type: K, id: string): (TRegistry[K] & TBase) | undefined {
-		return this.instances.get(type as string)?.get(id) as (TRegistry[K] & TBase) | undefined;
+	get<K extends keyof TRegistry>(type: K, id: string): TRegistry[K] | undefined {
+		return this.instances.get(type as string)?.get(id) as TRegistry[K] | undefined;
 	}
 
-	getAll<K extends keyof TRegistry>(type: K): (TRegistry[K] & TBase)[] {
+	getAll<K extends keyof TRegistry>(type: K): TRegistry[K][] {
 		const typeMap = this.instances.get(type as string);
-		return typeMap ? (Array.from(typeMap.values()) as (TRegistry[K] & TBase)[]) : [];
+		return typeMap ? (Array.from(typeMap.values()) as TRegistry[K][]) : [];
 	}
 
 	getIds<K extends keyof TRegistry>(type: K): string[] {
