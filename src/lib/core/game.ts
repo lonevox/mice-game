@@ -1,58 +1,39 @@
-import { dataComponentRegistry } from '$lib/core/registry/dataComponent';
-import { ModLoader } from '$lib/core/modLoader';
 import type { ModConfig } from '$lib/core/mod';
-import { ResourceService } from '$lib/base_game/data_components/resource';
+import { ModLoader } from '$lib/core/modLoader';
+import { DataComponentRegistryImpl } from '$lib/core/registry/dataComponent';
+import { DataComponentTypeCatalog } from '$lib/core/registry/dataComponentType';
 
 export class Game {
-	static readonly registry = dataComponentRegistry;
-	static readonly modLoader = new ModLoader();
+	readonly registry = new DataComponentRegistryImpl();
+	readonly typeCatalog = new DataComponentTypeCatalog();
+	readonly modLoader = new ModLoader(this.registry, this.typeCatalog);
 
-	private static animationId: number | null = null;
-	private static lastFrameTime = Date.now();
+	private intervalId: ReturnType<typeof setInterval> | undefined;
+	private lastUpdateTime = Date.now();
 
-	/**
-	 * Load mods into the game. Mods are sorted by dependencies automatically.
-	 */
-	static loadMods(mods: ModConfig[]): void {
+	loadMods(mods: ModConfig[]): void {
 		this.modLoader.loadMods(mods);
 	}
 
-	/**
-	 * Start the game loop. Call this after mods are loaded.
-	 */
-	static start(): void {
-		if (this.animationId !== null) {
-			console.warn('Game loop already running');
-			return;
-		}
-
-		this.lastFrameTime = Date.now();
-		this.tick();
+	start(intervalMilliseconds = 20): void {
+		if (this.intervalId !== undefined) return;
+		this.lastUpdateTime = Date.now();
+		this.intervalId = setInterval(() => this.tick(), intervalMilliseconds);
 	}
 
-	/**
-	 * Stop the game loop.
-	 */
-	static stop(): void {
-		if (this.animationId !== null) {
-			cancelAnimationFrame(this.animationId);
-			this.animationId = null;
-		}
+	stop(): void {
+		if (this.intervalId === undefined) return;
+		clearInterval(this.intervalId);
+		this.intervalId = undefined;
 	}
 
-	private static tick(): void {
+	private tick(): void {
 		const now = Date.now();
-		const deltaTime = (now - this.lastFrameTime) / 1000;
-		this.lastFrameTime = now;
+		const deltaTime = (now - this.lastUpdateTime) / 1000;
+		this.lastUpdateTime = now;
 
-		this.update(deltaTime);
-
-		this.animationId = requestAnimationFrame(() => this.tick());
-	}
-
-	private static update(deltaTime: number): void {
-		for (const resource of ResourceService.getAll()) {
-			ResourceService.applyProduction(resource, deltaTime);
+		for (const system of this.modLoader.getSystems()) {
+			system.update(this.registry, deltaTime);
 		}
 	}
 }

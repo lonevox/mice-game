@@ -1,10 +1,10 @@
-import { type Resource } from './resource';
-import { type Location } from './location';
-import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent';
+import type { Resource } from './resource';
+import type { Location } from './location';
+import { type DataComponent, type DataComponentRegistryImpl } from '$lib/core/registry/dataComponent';
 import { ReactiveProperty } from '$lib/core/registry/reactiveRegistry.svelte';
 
 export interface BuildingCost {
-	resource: Resource;
+	resourceId: string;
 	amount: number;
 }
 
@@ -17,7 +17,7 @@ export interface Building extends DataComponent {
 	description?: string;
 	icon?: string;
 	basePrice: BuildingCost[];
-	location: Location;
+	locationId: string;
 	unlocked: boolean;
 
 	amount: ReactiveProperty;
@@ -47,63 +47,74 @@ declare module '$lib/core/registry/dataComponentType' {
 }
 
 export class BuildingService {
-	static create(config: BuildingConfig): Building {
-		// Resolve resource IDs to actual Resource instances
-		const basePrice: BuildingCost[] = config.basePrice
-			.map((cost) => {
-				const resource = dataComponentRegistry.get('resource', cost.resourceId);
-				if (!resource) {
-					console.warn(`Resource "${cost.resourceId}" not found for building "${config.id}"`);
-					return null;
-				}
-				return { resource, amount: cost.amount };
-			})
-			.filter((cost): cost is BuildingCost => cost !== null);
-
-		const location = dataComponentRegistry.get('location', config.locationId);
-		if (!location) {
-			throw new Error(
-				`Error creating Building: '${config.locationId}' is not a valid Location ID.`
-			);
-		}
-
-		const building: Building = {
+	static create(config: BuildingConfig, registry: DataComponentRegistryImpl): Building {
+		return {
 			id: config.id,
 			name: config.name,
 			description: config.description,
 			icon: config.icon ?? '',
-			basePrice,
-			location,
+			basePrice: config.basePrice.map((cost) => ({ ...cost })),
+			locationId: config.locationId,
 			unlocked: config.unlocked ?? false,
-			amount: dataComponentRegistry.createProperty(`${config.id}_amount`, config.baseAmount ?? 0),
-			priceMultiplier: dataComponentRegistry.createProperty(`${config.id}_price_multiplier`, 1),
-			priceScale: dataComponentRegistry.createProperty(
-				`${config.id}_price_scale`,
-				config.basePriceScale ?? 1.15
-			)
+			amount: registry.createProperty(`${config.id}_amount`, config.baseAmount ?? 0),
+			priceMultiplier: registry.createProperty(`${config.id}_price_multiplier`, 1),
+			priceScale: registry.createProperty(`${config.id}_price_scale`, config.basePriceScale ?? 1.15),
 		};
-		dataComponentRegistry.register('building', building.id, building);
-		return building;
 	}
 
-	static getAll(): Building[] {
-		return dataComponentRegistry.getAll('building');
+	static validate(registry: DataComponentRegistryImpl): void {
+		for (const building of this.getAll(registry)) {
+			if (!registry.has('location', building.locationId)) {
+				throw new Error(`Building "${building.id}" references missing Location "${building.locationId}".`);
+			}
+			if (!Number.isInteger(building.amount.base) || building.amount.base < 0) {
+				throw new Error(`Building "${building.id}" must have a non-negative integer amount.`);
+			}
+			if (!Number.isFinite(building.priceScale.base) || building.priceScale.base <= 0)
+				throw new Error(`Building "${building.id}" must have a positive price scale.`);
+			if (!Number.isFinite(building.priceMultiplier.base) || building.priceMultiplier.base <= 0)
+				throw new Error(`Building "${building.id}" must have a positive price multiplier.`);
+
+			const costResourceIds = new Set<string>();
+			for (const cost of building.basePrice) {
+				if (!registry.has('resource', cost.resourceId)) {
+					throw new Error(`Building "${building.id}" references missing Resource "${cost.resourceId}".`);
+				}
+				if (!Number.isFinite(cost.amount) || cost.amount < 0) {
+					throw new Error(`Building "${building.id}" has an invalid resource cost.`);
+				}
+				if (costResourceIds.has(cost.resourceId)) {
+					throw new Error(`Building "${building.id}" has duplicate costs for Resource "${cost.resourceId}".`);
+				}
+				costResourceIds.add(cost.resourceId);
+			}
+		}
 	}
 
-	static getUnlocked(): Building[] {
-		return this.getAll().filter((building) => building.unlocked);
+	static getAll(registry: DataComponentRegistryImpl): Building[] {
+		return registry.getAll('building');
 	}
 
-	static getUnlockedAt(location: Location): Building[] {
-		return this.getUnlocked().filter((building) => building.location.id === location.id);
+	static getUnlocked(registry: DataComponentRegistryImpl): Building[] {
+		return this.getAll(registry).filter((building) => building.unlocked);
 	}
 
-	static buy(building: Building): boolean {
+	static getUnlockedAt(registry: DataComponentRegistryImpl, location: Location): Building[] {
+		return this.getUnlocked(registry).filter((building) => building.locationId === location.id);
+	}
+
+	static setUnlocked(registry: DataComponentRegistryImpl, buildingId: string, unlocked: boolean): void {
+		const building = registry.get('building', buildingId);
+		if (!building) throw new Error(`Building "${buildingId}" does not exist.`);
+		registry.replace('building', buildingId, { ...building, unlocked });
+	}
+
+	static buy(registry: DataComponentRegistryImpl, building: Building): boolean {
 		// Check if player can afford
 		for (const cost of building.basePrice) {
-			const currentAmount = cost.resource.amount.computed;
-			const scaledPrice =
-				cost.amount * Math.pow(building.priceScale.computed, building.amount.computed);
+			const resource = this.getCostResource(registry, cost);
+			const currentAmount = resource.amount.computed;
+			const scaledPrice = this.getScaledPrice(building, cost);
 			if (currentAmount < scaledPrice) {
 				return false;
 			}
@@ -111,9 +122,9 @@ export class BuildingService {
 
 		// Deduct costs
 		for (const cost of building.basePrice) {
-			const scaledPrice =
-				cost.amount * Math.pow(building.priceScale.computed, building.amount.computed);
-			cost.resource.amount.base -= scaledPrice;
+			const resource = this.getCostResource(registry, cost);
+			const scaledPrice = this.getScaledPrice(building, cost);
+			resource.amount.base -= scaledPrice;
 		}
 
 		// Increment building count
@@ -122,21 +133,32 @@ export class BuildingService {
 		return true;
 	}
 
-	static sell(building: Building) {
+	static sell(building: Building): boolean {
+		if (building.amount.base <= 0) return false;
 		building.amount.base -= 1;
+		return true;
 	}
 
 	static getScaledPrice(building: Building, cost: BuildingCost): number {
-		return cost.amount * Math.pow(building.priceScale.computed, building.amount.computed);
+		return (
+			cost.amount * building.priceMultiplier.computed * Math.pow(building.priceScale.computed, building.amount.computed)
+		);
 	}
 
-	static canAfford(building: Building): boolean {
+	static canAfford(registry: DataComponentRegistryImpl, building: Building): boolean {
 		for (const cost of building.basePrice) {
+			const resource = this.getCostResource(registry, cost);
 			const scaledPrice = BuildingService.getScaledPrice(building, cost);
-			if (cost.resource.amount.computed < scaledPrice) {
+			if (resource.amount.computed < scaledPrice) {
 				return false;
 			}
 		}
 		return true;
+	}
+
+	static getCostResource(registry: DataComponentRegistryImpl, cost: BuildingCost): Resource {
+		const resource = registry.get('resource', cost.resourceId);
+		if (!resource) throw new Error(`Resource "${cost.resourceId}" does not exist.`);
+		return resource;
 	}
 }

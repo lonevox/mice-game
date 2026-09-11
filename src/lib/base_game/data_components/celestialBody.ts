@@ -1,10 +1,10 @@
-import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent';
+import { type DataComponent, type DataComponentRegistryImpl } from '$lib/core/registry/dataComponent';
 import type { CelestialBodyClassification } from '$lib/base_game/data_components/celestialBodyClassification';
 
 export interface CelestialBody extends DataComponent {
 	unlocked: boolean;
-	classification: CelestialBodyClassification;
-	orbits?: CelestialBody;
+	classificationId: string;
+	orbitsId?: string;
 }
 
 export interface CelestialBodyConfig {
@@ -25,54 +25,31 @@ declare module '$lib/core/registry/dataComponentType' {
 }
 
 export class CelestialBodyService {
-	private static pendingOrbits = new Map<string, string>();
-
 	static create(config: CelestialBodyConfig): CelestialBody {
-		const classification = dataComponentRegistry.get(
-			'celestialBodyClassification',
-			config.classificationId
-		);
-		if (!classification) {
-			throw new Error(
-				`Error creating Celestial Body: '${config.classificationId}' is not a valid Celestial Body Classification ID.`
-			);
-		}
-
-		const celestialBody: CelestialBody = {
+		return {
 			id: config.id,
 			name: config.name,
 			unlocked: config.unlocked ?? false,
-			classification
+			classificationId: config.classificationId,
+			orbitsId: config.orbitsId,
 		};
-		if (config.orbitsId) {
-			this.pendingOrbits.set(celestialBody.id, config.orbitsId);
-		}
-		dataComponentRegistry.register('celestialBody', celestialBody.id, celestialBody);
-		return celestialBody;
 	}
 
-	static finalize(): void {
-		for (const [bodyId, parentId] of this.pendingOrbits) {
-			const celestialBody = dataComponentRegistry.get('celestialBody', bodyId);
-			const parent = dataComponentRegistry.get('celestialBody', parentId);
-
-			if (!celestialBody) {
-				throw new Error(`Error resolving Celestial Body orbit: '${bodyId}' does not exist.`);
-			}
-			if (!parent) {
+	static validate(registry: DataComponentRegistryImpl): void {
+		for (const celestialBody of this.getAll(registry)) {
+			if (!registry.has('celestialBodyClassification', celestialBody.classificationId)) {
 				throw new Error(
-					`Error resolving Celestial Body '${bodyId}': '${parentId}' is not a valid Celestial Body ID.`
+					`Celestial Body "${celestialBody.id}" references missing classification "${celestialBody.classificationId}".`,
 				);
 			}
-
-			celestialBody.orbits = parent;
+			if (celestialBody.orbitsId && !registry.has('celestialBody', celestialBody.orbitsId)) {
+				throw new Error(`Celestial Body "${celestialBody.id}" orbits missing body "${celestialBody.orbitsId}".`);
+			}
 		}
-
-		this.validateOrbitHierarchy();
-		this.pendingOrbits.clear();
+		this.validateOrbitHierarchy(registry);
 	}
 
-	private static validateOrbitHierarchy(): void {
+	private static validateOrbitHierarchy(registry: DataComponentRegistryImpl): void {
 		const visited = new Set<string>();
 		const visiting = new Set<string>();
 		const path: CelestialBody[] = [];
@@ -81,30 +58,56 @@ export class CelestialBodyService {
 			if (visited.has(body.id)) return;
 			if (visiting.has(body.id)) {
 				const cycleStart = path.findIndex((candidate) => candidate.id === body.id);
-				const cycle = [...path.slice(cycleStart), body]
-					.map((candidate) => candidate.id)
-					.join(' -> ');
+				const cycle = [...path.slice(cycleStart), body].map((candidate) => candidate.id).join(' -> ');
 				throw new Error(`Invalid Celestial Body orbit cycle: ${cycle}.`);
 			}
 
 			visiting.add(body.id);
 			path.push(body);
-			if (body.orbits) visit(body.orbits);
+			const parent = this.getParent(registry, body);
+			if (parent) visit(parent);
 			path.pop();
 			visiting.delete(body.id);
 			visited.add(body.id);
 		};
 
-		for (const celestialBody of this.getAll()) {
+		for (const celestialBody of this.getAll(registry)) {
 			visit(celestialBody);
 		}
 	}
 
-	static getAll(): CelestialBody[] {
-		return dataComponentRegistry.getAll('celestialBody');
+	static getAll(registry: DataComponentRegistryImpl): CelestialBody[] {
+		return registry.getAll('celestialBody');
 	}
 
-	static getUnlocked(): CelestialBody[] {
-		return this.getAll().filter((celestialBody) => celestialBody.unlocked);
+	static getUnlocked(registry: DataComponentRegistryImpl): CelestialBody[] {
+		return this.getAll(registry).filter((celestialBody) => celestialBody.unlocked);
+	}
+
+	static setUnlocked(registry: DataComponentRegistryImpl, celestialBodyId: string, unlocked: boolean): void {
+		const celestialBody = registry.get('celestialBody', celestialBodyId);
+		if (!celestialBody) throw new Error(`Celestial Body "${celestialBodyId}" does not exist.`);
+		registry.replace('celestialBody', celestialBodyId, { ...celestialBody, unlocked });
+	}
+
+	static getParent(registry: DataComponentRegistryImpl, celestialBody: CelestialBody): CelestialBody | undefined {
+		return celestialBody.orbitsId ? registry.get('celestialBody', celestialBody.orbitsId) : undefined;
+	}
+
+	static getChildren(registry: DataComponentRegistryImpl, celestialBody: CelestialBody): CelestialBody[] {
+		return this.getUnlocked(registry).filter((body) => body.orbitsId === celestialBody.id);
+	}
+
+	static getClassification(
+		registry: DataComponentRegistryImpl,
+		celestialBody: CelestialBody,
+	): CelestialBodyClassification {
+		const classification = registry.get('celestialBodyClassification', celestialBody.classificationId);
+		if (!classification) {
+			throw new Error(
+				`Celestial Body "${celestialBody.id}" references missing classification "${celestialBody.classificationId}".`,
+			);
+		}
+		return classification;
 	}
 }

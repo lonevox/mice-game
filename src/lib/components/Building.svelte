@@ -2,7 +2,7 @@
 	import { type Building, BuildingService } from '$lib/base_game/data_components/building.js';
 	import { formatDecimal, formatTimeLeft } from '$lib/core/util/stringFormatting.js';
 	import { Portal, Tooltip } from '@skeletonlabs/skeleton-svelte';
-	import { Game } from '$lib/core/game';
+	import { useGame } from '$lib/core/gameContext';
 
 	interface Props {
 		building: Building;
@@ -10,7 +10,8 @@
 
 	let { building }: Props = $props();
 
-	const canAfford = $derived(BuildingService.canAfford(building));
+	const game = useGame();
+	const canAfford = $derived(BuildingService.canAfford(game.registry, building));
 
 	function formatBuildingText(building: Building): string {
 		if (building.amount.computed > 0) {
@@ -35,17 +36,23 @@
 	}
 
 	function handleBuy() {
-		BuildingService.buy(building);
+		BuildingService.buy(game.registry, building);
 	}
 
 	function handleSell() {
 		BuildingService.sell(building);
-		console.log('sell');
 	}
 </script>
 
-<Tooltip positioning={{ placement: 'right-start' }} openDelay={0} closeDelay={0} closeOnClick={false}
-				 closeOnPointerDown={false} closeOnEscape={false} closeOnScroll={false}>
+<Tooltip
+	positioning={{ placement: 'right-start' }}
+	openDelay={0}
+	closeDelay={0}
+	closeOnClick={false}
+	closeOnPointerDown={false}
+	closeOnEscape={false}
+	closeOnScroll={false}
+>
 	<Tooltip.Trigger class="w-full">
 		<div class="preset-tonal border border-surface-500 w-full flex">
 			<button
@@ -72,26 +79,25 @@
 
 				<!-- Costs -->
 				<p class="font-bold text-sm">Cost</p>
-				{#each building.basePrice as cost}
+				{#each building.basePrice as cost (cost.resourceId)}
+					{@const resource = BuildingService.getCostResource(game.registry, cost)}
 					{@const scaledPrice = BuildingService.getScaledPrice(building, cost)}
-					{@const resourceAmount = cost.resource.amount.computed}
-					{@const resourceProduction = cost.resource.production.computed}
+					{@const resourceAmount = resource.amount.computed}
+					{@const resourceProduction = resource.production.computed}
 					<div class="flex justify-between">
-						<span>{cost.resource.icon} {cost.resource.name.toLowerCase()}</span>
-						<span
-							class:text-error-400={resourceAmount < scaledPrice}
-						>
-              {formatResourcePrice(resourceAmount, resourceProduction, scaledPrice)}
-            </span>
+						<span>{resource.icon} {resource.name.toLowerCase()}</span>
+						<span class:text-error-400={resourceAmount < scaledPrice}>
+							{formatResourcePrice(resourceAmount, resourceProduction, scaledPrice)}
+						</span>
 					</div>
 				{/each}
 
 				<!-- Effects -->
-				{@const linksFrom = Game.registry.getLinksFrom(building.amount.id)}
+				{@const linksFrom = game.registry.getLinksFrom(building.amount.id)}
 				{#if linksFrom.length > 0}
 					<hr class="opacity-50" />
 					<p class="font-bold text-sm">Effects (per building)</p>
-					{#each linksFrom as link}
+					{#each linksFrom as link (`${link.from}:${link.to}:${link.type}`)}
 						{@const label = link.metadata?.label ?? link.to}
 						{@const description = link.metadata?.description}
 						<div class="text-surface-400 text-sm">

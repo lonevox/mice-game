@@ -16,7 +16,7 @@ declare module './reactiveRegistry.svelte.js' {
 	}
 }
 
-class DataComponentRegistryImpl extends ReactiveRegistry<
+export class DataComponentRegistryImpl extends ReactiveRegistry<
 	DataComponent,
 	'DataComponentRegistry',
 	DataComponentRegistry
@@ -25,8 +25,6 @@ class DataComponentRegistryImpl extends ReactiveRegistry<
 		super('DataComponentRegistry');
 	}
 }
-
-export const dataComponentRegistry = new DataComponentRegistryImpl();
 
 // Re-export for convenience
 export type { DataComponentRegistry, DataComponentConfigRegistry } from './dataComponentType';

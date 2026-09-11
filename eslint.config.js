@@ -13,12 +13,12 @@ export default [
 			'node_modules/**',
 			'package/**',
 			'*.config.js.timestamp-*',
-			'*.config.ts.timestamp-*'
-		]
+			'*.config.ts.timestamp-*',
+		],
 	},
 	js.configs.recommended,
 	{
-		languageOptions: { globals: { ...globals.browser, ...globals.node } }
+		languageOptions: { globals: { ...globals.browser, ...globals.node } },
 	},
 	{
 		files: ['**/*.ts', '**/*.svelte'],
@@ -26,24 +26,24 @@ export default [
 		languageOptions: {
 			parser: tsParser,
 			parserOptions: { sourceType: 'module', ecmaVersion: 2020 },
-			globals: { ...globals.browser, ...globals.node }
+			globals: { ...globals.browser, ...globals.node },
 		},
-		rules: tsPlugin.configs.recommended.rules
+		rules: tsPlugin.configs.recommended.rules,
 	},
 	...sveltePlugin.configs['flat/recommended'],
 	{
 		files: ['**/*.svelte'],
 		languageOptions: {
-			parserOptions: { parser: tsParser }
-		}
+			parserOptions: { parser: tsParser },
+		},
 	},
 	{
 		files: ['**/*.svelte.ts', '**/*.svelte.js'],
 		languageOptions: {
 			parser: tsParser,
-			globals: { $state: 'readonly', $derived: 'readonly' }
+			globals: { $state: 'readonly', $derived: 'readonly' },
 		},
-		rules: { 'svelte/prefer-svelte-reactivity': 'off' }
+		rules: { 'svelte/prefer-svelte-reactivity': 'off' },
 	},
-	prettier
+	prettier,
 ];

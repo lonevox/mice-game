@@ -1,12 +1,13 @@
-import type { DataComponentRegistry } from '$lib/core/registry/dataComponent';
+import type { DataComponentRegistry, DataComponentRegistryImpl } from '$lib/core/registry/dataComponent';
 import type { Link } from '$lib/core/types';
 import type { DataComponentConfigRegistry } from '$lib/core/registry/dataComponentType';
+import type { GameSystem } from '$lib/core/system';
 
-export type DataComponentTypeDefinition = {
+export type DataComponentTypeDefinition<K extends keyof DataComponentRegistry = keyof DataComponentRegistry> = {
 	dependencies?: (keyof DataComponentRegistry)[];
 	service?: {
-		create: (config: any) => any;
-		finalize?: () => void;
+		create: (config: DataComponentConfigRegistry[K], registry: DataComponentRegistryImpl) => DataComponentRegistry[K];
+		validate?: (registry: DataComponentRegistryImpl) => void;
 	};
 };
 
@@ -33,7 +34,7 @@ export type ModConfig = {
 	 * The key is the type name, the value contains dependencies and service.
 	 */
 	dataComponentTypes?: {
-		[K in keyof DataComponentRegistry]?: DataComponentTypeDefinition;
+		[K in keyof DataComponentRegistry]?: DataComponentTypeDefinition<K>;
 	};
 	/**
 	 * Contains all DataComponent configs of the mod in arrays.
@@ -43,6 +44,8 @@ export type ModConfig = {
 	dataComponents?: {
 		[K in keyof DataComponentConfigRegistry]?: DataComponentConfigRegistry[K][];
 	};
+	/** Runtime systems contributed by this mod. */
+	systems?: GameSystem[];
 	/**
 	 * Contains all Links that the mod declares. These links don't need to be between DataComponents
 	 * of the mod; they can be between DataComponents of any mod.

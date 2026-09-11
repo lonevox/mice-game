@@ -1,5 +1,11 @@
 // core/registry/reactiveRegistry.svelte.ts
 import type { Link, LinkContribution, ValueBreakdown } from '../types';
+import { SvelteMap } from 'svelte/reactivity';
+
+interface ReactivePropertyRegistry {
+	registerProperty(property: ReactiveProperty): void;
+	evaluateLinks(baseValue: number, links: Link[]): number;
+}
 
 /**
  * A reactive property that can be linked to other properties.
@@ -12,46 +18,14 @@ export class ReactiveProperty {
 	constructor(
 		public readonly id: string,
 		baseValue: number,
-		private registry: ReactiveRegistry<any, any, any>
+		private registry: ReactivePropertyRegistry,
 	) {
 		this.base = baseValue;
 		registry.registerProperty(this);
 	}
 
 	computed = $derived.by(() => {
-		let result = this.base;
-		if (this.links.length === 0) return result;
-
-		const adds: number[] = [];
-		const multiplies: number[] = [];
-
-		for (const link of this.links) {
-			const sourceValue = this.registry.getPropertyValue(link.from);
-			const coefficient = link.coefficient ?? 1;
-			const effectiveValue = sourceValue * coefficient;
-
-			switch (link.type) {
-				case 'add':
-					adds.push(effectiveValue);
-					break;
-				case 'subtract':
-					adds.push(-effectiveValue);
-					break;
-				case 'multiply':
-					multiplies.push(effectiveValue);
-					break;
-				case 'divide':
-					if (effectiveValue !== 0) {
-						multiplies.push(1 / effectiveValue);
-					}
-					break;
-			}
-		}
-
-		for (const add of adds) result += add;
-		for (const multiply of multiplies) result *= multiply;
-
-		return result;
+		return this.registry.evaluateLinks(this.base, this.links);
 	});
 
 	setLinks(links: Link[]) {
@@ -63,9 +37,17 @@ export class ReactiveProperty {
 	}
 }
 
+// An empty declaration is intentional: concrete registries augment this map.
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TypeRegistryMap {
 	// Will be augmented by specific registry instances
 }
+
+export type ReactiveRegistryCheckpoint<TBase> = {
+	instances: Map<string, Map<string, TBase>>;
+	properties: Map<string, ReactiveProperty>;
+	links: Link[];
+};
 
 /**
  * A unified registry that stores DataComponents AND manages reactive properties/links.
@@ -74,18 +56,13 @@ export interface TypeRegistryMap {
 export class ReactiveRegistry<
 	TBase,
 	TRegistryKey extends keyof TypeRegistryMap,
-	TRegistry extends Record<string, TBase> = TypeRegistryMap[TRegistryKey] extends Record<
-		string,
-		TBase
-	>
+	TRegistry extends Record<string, TBase> = TypeRegistryMap[TRegistryKey] extends Record<string, TBase>
 		? TypeRegistryMap[TRegistryKey]
-		: Record<string, TBase>
+		: Record<string, TBase>,
 > {
-	// DataComponent storage (by type, then by id)
-	private instances = $state<Map<string, Map<string, TBase>>>(new Map());
-
-	// Reactive property storage (flat, by property id)
-	private properties = $state<Map<string, ReactiveProperty>>(new Map());
+	// SvelteMap makes registrations and removals visible to derived UI queries.
+	private instances = new SvelteMap<string, SvelteMap<string, TBase>>();
+	private properties = new SvelteMap<string, ReactiveProperty>();
 
 	// All links in the system
 	private allLinks = $state<Link[]>([]);
@@ -96,7 +73,17 @@ export class ReactiveRegistry<
 
 	register<K extends keyof TRegistry>(type: K, id: string, instance: TRegistry[K]): void {
 		if (!this.instances.has(type as string)) {
-			this.instances.set(type as string, new Map());
+			this.instances.set(type as string, new SvelteMap());
+		}
+		if (this.instances.get(type as string)!.has(id)) {
+			throw new Error(`Duplicate ${String(type)} DataComponent ID: "${id}".`);
+		}
+		this.instances.get(type as string)!.set(id, instance);
+	}
+
+	replace<K extends keyof TRegistry>(type: K, id: string, instance: TRegistry[K]): void {
+		if (!this.instances.get(type as string)?.has(id)) {
+			throw new Error(`Cannot replace missing ${String(type)} DataComponent "${id}".`);
 		}
 		this.instances.get(type as string)!.set(id, instance);
 	}
@@ -143,7 +130,7 @@ export class ReactiveRegistry<
 	 */
 	initializeType<K extends keyof TRegistry>(type: K): void {
 		if (!this.instances.has(type as string)) {
-			this.instances.set(type as string, new Map());
+			this.instances.set(type as string, new SvelteMap());
 		}
 	}
 
@@ -168,6 +155,9 @@ export class ReactiveRegistry<
 	 * Register a reactive property. Called automatically by ReactiveProperty constructor.
 	 */
 	registerProperty(property: ReactiveProperty): void {
+		if (this.properties.has(property.id)) {
+			throw new Error(`Duplicate ReactiveProperty ID: "${property.id}".`);
+		}
 		this.properties.set(property.id, property);
 		this.rebuildLinksForProperty(property.id);
 	}
@@ -190,14 +180,18 @@ export class ReactiveRegistry<
 	 * Get the computed value of a property by ID.
 	 */
 	getPropertyValue(id: string): number {
-		return this.properties.get(id)?.computed ?? 0;
+		const property = this.properties.get(id);
+		if (!property) throw new Error(`ReactiveProperty "${id}" does not exist.`);
+		return property.computed;
 	}
 
 	/**
 	 * Get the base value of a property by ID.
 	 */
 	getPropertyBaseValue(id: string): number {
-		return this.properties.get(id)?.base ?? 0;
+		const property = this.properties.get(id);
+		if (!property) throw new Error(`ReactiveProperty "${id}" does not exist.`);
+		return property.base;
 	}
 
 	/**
@@ -205,9 +199,8 @@ export class ReactiveRegistry<
 	 */
 	setPropertyValue(id: string, value: number): void {
 		const property = this.properties.get(id);
-		if (property) {
-			property.base = value;
-		}
+		if (!property) throw new Error(`ReactiveProperty "${id}" does not exist.`);
+		property.base = value;
 	}
 
 	/**
@@ -215,20 +208,20 @@ export class ReactiveRegistry<
 	 */
 	incrementProperty(id: string, amount: number = 1): void {
 		const property = this.properties.get(id);
-		if (property) {
-			property.base += amount;
-		}
+		if (!property) throw new Error(`ReactiveProperty "${id}" does not exist.`);
+		property.base += amount;
 	}
 
 	// ============ Link Methods ============
 
 	addLink(link: Link): void {
-		this.allLinks = [...this.allLinks, link];
-		this.rebuildLinksForProperty(link.to);
+		this.addLinks([link]);
 	}
 
 	addLinks(links: Link[]): void {
-		this.allLinks = [...this.allLinks, ...links];
+		const nextLinks = [...this.allLinks, ...links];
+		this.validateLinks(nextLinks);
+		this.allLinks = nextLinks;
 		const affectedTargets = new Set(links.map((l) => l.to));
 		for (const target of affectedTargets) {
 			this.rebuildLinksForProperty(target);
@@ -248,6 +241,81 @@ export class ReactiveRegistry<
 		}
 	}
 
+	private validateLinks(links: Link[]): void {
+		const keys = new Set<string>();
+		const dependents = new Map<string, string[]>();
+
+		for (const link of links) {
+			if (!this.properties.has(link.from)) {
+				throw new Error(`Link source ReactiveProperty "${link.from}" does not exist.`);
+			}
+			if (!this.properties.has(link.to)) {
+				throw new Error(`Link target ReactiveProperty "${link.to}" does not exist.`);
+			}
+			if (link.coefficient !== undefined && !Number.isFinite(link.coefficient)) {
+				throw new Error(`Link from "${link.from}" to "${link.to}" has an invalid coefficient.`);
+			}
+
+			const key = `${link.from}\u0000${link.to}\u0000${link.type}`;
+			if (keys.has(key)) {
+				throw new Error(`Duplicate ${link.type} link from "${link.from}" to "${link.to}".`);
+			}
+			keys.add(key);
+			dependents.set(link.from, [...(dependents.get(link.from) ?? []), link.to]);
+		}
+
+		const visited = new Set<string>();
+		const visiting = new Set<string>();
+		const visit = (propertyId: string, path: string[]): void => {
+			if (visited.has(propertyId)) return;
+			if (visiting.has(propertyId)) {
+				const cycleStart = path.indexOf(propertyId);
+				throw new Error(`ReactiveProperty link cycle: ${[...path.slice(cycleStart), propertyId].join(' -> ')}.`);
+			}
+			visiting.add(propertyId);
+			for (const dependent of dependents.get(propertyId) ?? []) visit(dependent, [...path, propertyId]);
+			visiting.delete(propertyId);
+			visited.add(propertyId);
+		};
+
+		for (const propertyId of this.properties.keys()) visit(propertyId, []);
+	}
+
+	evaluateLinks(baseValue: number, links: Link[]): number {
+		// Link order is significant, allowing set/min/max to compose predictably.
+		let result = baseValue;
+		for (const link of links) {
+			const effectiveValue = this.getPropertyValue(link.from) * (link.coefficient ?? 1);
+			switch (link.type) {
+				case 'add':
+					result += effectiveValue;
+					break;
+				case 'subtract':
+					result -= effectiveValue;
+					break;
+				case 'multiply':
+					result *= effectiveValue;
+					break;
+				case 'divide':
+					if (effectiveValue === 0) {
+						throw new Error(`Cannot divide ReactiveProperty "${link.to}" by zero.`);
+					}
+					result /= effectiveValue;
+					break;
+				case 'set':
+					result = effectiveValue;
+					break;
+				case 'max':
+					result = Math.max(result, effectiveValue);
+					break;
+				case 'min':
+					result = Math.min(result, effectiveValue);
+					break;
+			}
+		}
+		return result;
+	}
+
 	// ============ Link Query Methods ============
 
 	getLinksTo(targetId: string): Link[] {
@@ -263,67 +331,36 @@ export class ReactiveRegistry<
 	}
 
 	getDependents(sourceId: string): string[] {
-		return [
-			...new Set(this.allLinks.filter((link) => link.from === sourceId).map((link) => link.to))
-		];
+		return [...new Set(this.allLinks.filter((link) => link.from === sourceId).map((link) => link.to))];
 	}
 
 	getDependencies(targetId: string): string[] {
-		return [
-			...new Set(this.allLinks.filter((link) => link.to === targetId).map((link) => link.from))
-		];
+		return [...new Set(this.allLinks.filter((link) => link.to === targetId).map((link) => link.from))];
 	}
 
 	// ============ Value Breakdown & Debugging ============
 
 	getValueBreakdown(targetId: string): ValueBreakdown {
 		const baseValue = this.getPropertyBaseValue(targetId);
-		const totalValue = this.getPropertyValue(targetId);
 		const links = this.getLinksTo(targetId);
-
-		const contributions: LinkContribution[] = links
-			.map((link) => {
-				const sourceValue = this.getPropertyValue(link.from);
-				const coefficient = link.coefficient ?? 1;
-
-				let contribution = 0;
-				switch (link.type) {
-					case 'add':
-						contribution = sourceValue * coefficient;
-						break;
-					case 'subtract':
-						contribution = -(sourceValue * coefficient);
-						break;
-					case 'multiply':
-						contribution = baseValue * (sourceValue * coefficient - 1);
-						break;
-					case 'divide':
-						if (sourceValue !== 0) {
-							contribution = baseValue * (1 - 1 / (sourceValue * coefficient));
-						}
-						break;
-					case 'set':
-						contribution = sourceValue * coefficient - baseValue;
-						break;
-					case 'max':
-					case 'min':
-						contribution = 0;
-						break;
-				}
-
-				return {
-					link,
-					sourceValue,
-					contribution,
-					effectiveCoefficient: coefficient
-				};
-			})
-			.filter((c): c is LinkContribution => c !== null);
+		let runningValue = baseValue;
+		const contributions: LinkContribution[] = links.map((link) => {
+			const sourceValue = this.getPropertyValue(link.from);
+			const nextValue = this.evaluateLinks(runningValue, [link]);
+			const contribution = nextValue - runningValue;
+			runningValue = nextValue;
+			return {
+				link,
+				sourceValue,
+				contribution,
+				effectiveCoefficient: link.coefficient ?? 1,
+			};
+		});
 
 		return {
 			baseValue,
-			totalValue,
-			contributions
+			totalValue: runningValue,
+			contributions,
 		};
 	}
 
@@ -345,7 +382,7 @@ export class ReactiveRegistry<
 				case 'add':
 				case 'subtract':
 					lines.push(
-						`${sign}${contrib.contribution.toFixed(2)} from ${label} (${contrib.sourceValue.toFixed(2)} × ${contrib.effectiveCoefficient})`
+						`${sign}${contrib.contribution.toFixed(2)} from ${label} (${contrib.sourceValue.toFixed(2)} × ${contrib.effectiveCoefficient})`,
 					);
 					break;
 				case 'multiply':
@@ -364,8 +401,8 @@ export class ReactiveRegistry<
 	// ============ Reset & Cleanup ============
 
 	clearAll(): void {
-		this.instances = new Map();
-		this.properties = new Map();
+		this.instances.clear();
+		this.properties.clear();
 		this.allLinks = [];
 	}
 
@@ -374,5 +411,24 @@ export class ReactiveRegistry<
 		for (const property of this.properties.values()) {
 			property.setLinks([]);
 		}
+	}
+
+	checkpoint(): ReactiveRegistryCheckpoint<TBase> {
+		return {
+			instances: new Map(Array.from(this.instances, ([type, values]) => [type, new Map(values)] as const)),
+			properties: new Map(this.properties),
+			links: [...this.allLinks],
+		};
+	}
+
+	restore(checkpoint: ReactiveRegistryCheckpoint<TBase>): void {
+		this.instances.clear();
+		for (const [type, values] of checkpoint.instances) {
+			this.instances.set(type, new SvelteMap(values));
+		}
+		this.properties.clear();
+		for (const [id, property] of checkpoint.properties) this.properties.set(id, property);
+		this.allLinks = [...checkpoint.links];
+		for (const property of this.properties.values()) this.rebuildLinksForProperty(property.id);
 	}
 }

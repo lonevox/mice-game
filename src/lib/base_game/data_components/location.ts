@@ -1,9 +1,8 @@
-import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent';
-import type { CelestialBody } from '$lib/base_game/data_components/celestialBody';
+import { type DataComponent, type DataComponentRegistryImpl } from '$lib/core/registry/dataComponent';
 
 export interface Location extends DataComponent {
 	unlocked: boolean;
-	celestialBody: CelestialBody;
+	celestialBodyId: string;
 }
 
 export interface LocationConfig {
@@ -24,28 +23,33 @@ declare module '$lib/core/registry/dataComponentType' {
 
 export class LocationService {
 	static create(config: LocationConfig): Location {
-		const celestialBody = dataComponentRegistry.get('celestialBody', config.celestialBodyId);
-		if (!celestialBody) {
-			throw new Error(
-				`Error creating Location: '${config.celestialBodyId}' is not a valid Celestial Body ID.`
-			);
-		}
-
-		const location: Location = {
+		return {
 			id: config.id,
 			name: config.name,
 			unlocked: config.unlocked ?? false,
-			celestialBody
+			celestialBodyId: config.celestialBodyId,
 		};
-		dataComponentRegistry.register('location', location.id, location);
-		return location;
 	}
 
-	static getAll(): Location[] {
-		return dataComponentRegistry.getAll('location');
+	static validate(registry: DataComponentRegistryImpl): void {
+		for (const location of this.getAll(registry)) {
+			if (!registry.has('celestialBody', location.celestialBodyId)) {
+				throw new Error(`Location "${location.id}" references missing Celestial Body "${location.celestialBodyId}".`);
+			}
+		}
 	}
 
-	static getUnlocked(): Location[] {
-		return this.getAll().filter((location) => location.unlocked);
+	static getAll(registry: DataComponentRegistryImpl): Location[] {
+		return registry.getAll('location');
+	}
+
+	static getUnlocked(registry: DataComponentRegistryImpl): Location[] {
+		return this.getAll(registry).filter((location) => location.unlocked);
+	}
+
+	static setUnlocked(registry: DataComponentRegistryImpl, locationId: string, unlocked: boolean): void {
+		const location = registry.get('location', locationId);
+		if (!location) throw new Error(`Location "${locationId}" does not exist.`);
+		registry.replace('location', locationId, { ...location, unlocked });
 	}
 }

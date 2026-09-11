@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { ReactiveProperty } from '$lib/core/registry/reactiveRegistry.svelte.js';
-	import { Game } from '$lib/core/game';
+	import { useGame } from '$lib/core/gameContext';
 	import { formatDecimal } from '$lib/core/util/stringFormatting.js';
 
 	interface Props {
@@ -11,7 +11,8 @@
 
 	let { property, propertyName, valueFormatter = formatDecimal }: Props = $props();
 
-	const breakdown = $derived(Game.registry.getValueBreakdown(property.id));
+	const game = useGame();
+	const breakdown = $derived(game.registry.getValueBreakdown(property.id));
 </script>
 
 <div class="space-y-1">
@@ -21,7 +22,7 @@
 		<hr class="opacity-50" />
 		<div class="text-sm space-y-0.5">
 			<p>Base: {valueFormatter(breakdown.baseValue)}</p>
-			{#each breakdown.contributions as contrib}
+			{#each breakdown.contributions as contrib (`${contrib.link.from}:${contrib.link.to}:${contrib.link.type}`)}
 				{@const sign = contrib.contribution >= 0 ? '+' : ''}
 				{@const label = contrib.link.metadata?.label ?? contrib.link.from}
 				<p class="text-surface-400">

@@ -2,21 +2,8 @@
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import LocationTab from '$lib/components/LocationTab.svelte';
 	import Resources from '$lib/components/Resources.svelte';
-	import { data } from '$lib/base_game/baseGame.js';
 	import Log from '$lib/components/Log.svelte';
 	import AppBar from '$lib/components/AppBar.svelte';
-	import { Game } from '$lib/core/game';
-	import { onDestroy, onMount } from 'svelte';
-
-	Game.loadMods([data]);
-
-	onMount(() => {
-		Game.start();
-	});
-
-	onDestroy(() => {
-		Game.stop();
-	});
 </script>
 
 <AppBar />
@@ -34,9 +21,7 @@
 			<Tabs.Content value="tab1">
 				<LocationTab />
 			</Tabs.Content>
-			<Tabs.Content value="tab2">
-				(tab panel 2 contents)
-			</Tabs.Content>
+			<Tabs.Content value="tab2">(tab panel 2 contents)</Tabs.Content>
 		</Tabs>
 	</div>
 	<div class="basis-1/4">

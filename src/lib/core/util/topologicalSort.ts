@@ -2,7 +2,11 @@
  * Performs a topological sort on items with dependencies.
  * Throws an error if a circular dependency is detected.
  */
-export function topologicalSort<T>(items: T[], getDependencies: (item: T) => T[]): T[] {
+export function topologicalSort<T>(
+	items: T[],
+	getDependencies: (item: T) => T[],
+	getLabel: (item: T) => string = String,
+): T[] {
 	const result: T[] = [];
 	const visited = new Set<T>();
 	const visiting = new Set<T>(); // For cycle detection
@@ -13,7 +17,7 @@ export function topologicalSort<T>(items: T[], getDependencies: (item: T) => T[]
 		}
 
 		if (visiting.has(item)) {
-			const cycle = [...path, item].join(' -> ');
+			const cycle = [...path, item].map(getLabel).join(' -> ');
 			throw new Error(`Circular dependency detected: ${cycle}`);
 		}
 

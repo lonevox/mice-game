@@ -1,5 +1,5 @@
 import type { ModConfig } from '$lib/core/mod';
-import { ResourceService } from '$lib/base_game/data_components/resource';
+import { ResourceService, resourceProductionSystem } from '$lib/base_game/data_components/resource';
 import { BuildingService } from '$lib/base_game/data_components/building';
 import { LocationService } from '$lib/base_game/data_components/location';
 import { CelestialBodyService } from '$lib/base_game/data_components/celestialBody';
@@ -9,29 +9,30 @@ export const data: ModConfig = {
 	name: 'Base Game',
 	description: 'The core content for Mice Game',
 	dependencies: [],
+	systems: [resourceProductionSystem],
 	dataComponentTypes: {
 		rarity: {},
 		resource: {
-			service: ResourceService
+			service: ResourceService,
 		},
 		building: {
 			dependencies: ['resource', 'location'],
-			service: BuildingService
+			service: BuildingService,
 		},
 		location: {
 			dependencies: ['celestialBody'],
-			service: LocationService
+			service: LocationService,
 		},
 		celestialBody: {
 			dependencies: ['celestialBodyClassification'],
-			service: CelestialBodyService
+			service: CelestialBodyService,
 		},
-		celestialBodyClassification: {}
+		celestialBodyClassification: {},
 	},
 	dataComponents: {
 		rarity: [
 			{ id: 'common', name: 'Common', color: 'white' },
-			{ id: 'uncommon', name: 'Uncommon', color: 'green' }
+			{ id: 'uncommon', name: 'Uncommon', color: 'green' },
 		],
 		resource: [
 			{
@@ -40,9 +41,9 @@ export const data: ModConfig = {
 				baseAmount: 50,
 				baseMaxAmount: 100,
 				baseProduction: 0,
-				icon: '🌾'
+				icon: '🌾',
 			},
-			{ id: 'wood', name: 'Wood', baseAmount: 50, baseMaxAmount: 50, baseProduction: 0, icon: '🪵' }
+			{ id: 'wood', name: 'Wood', baseAmount: 50, baseMaxAmount: 50, baseProduction: 0, icon: '🪵' },
 		],
 		building: [
 			{
@@ -53,7 +54,7 @@ export const data: ModConfig = {
 				locationId: 'rath_forest',
 				unlocked: true,
 				basePriceScale: 1.5,
-				icon: '🕳️'
+				icon: '🕳️',
 			},
 			{
 				id: 'foraging_zone',
@@ -61,8 +62,9 @@ export const data: ModConfig = {
 				description: 'Mice gather grain from the wild',
 				basePrice: [{ resourceId: 'grain', amount: 10 }],
 				locationId: 'rath_forest',
+				unlocked: true,
 				basePriceScale: 1.15,
-				icon: '🌿'
+				icon: '🌿',
 			},
 			{
 				id: 'granary',
@@ -70,8 +72,9 @@ export const data: ModConfig = {
 				description: 'Increases grain storage capacity',
 				basePrice: [{ resourceId: 'wood', amount: 50 }],
 				locationId: 'rath_forest',
+				unlocked: true,
 				basePriceScale: 1.2,
-				icon: '🏠'
+				icon: '🏠',
 			},
 			{
 				id: 'launchpad',
@@ -80,69 +83,69 @@ export const data: ModConfig = {
 				basePrice: [{ resourceId: 'grain', amount: 40 }],
 				locationId: 'rath_forest',
 				basePriceScale: 1.2,
-				icon: '🚀'
-			}
+				icon: '🚀',
+			},
 		],
 		celestialBodyClassification: [
 			{ id: 'moon', name: 'Moon', symbol: '⏾' },
 			{ id: 'planet', name: 'Planet', symbol: '⬤' },
 			{ id: 'star', name: 'Star', symbol: '✸' },
-			{ id: 'black_hole', name: 'Black Hole', symbol: '𖦹' }
+			{ id: 'black_hole', name: 'Black Hole', symbol: '𖦹' },
 		],
 		celestialBody: [
 			{
 				id: 'maw',
 				name: 'Maw',
 				classificationId: 'black_hole',
-				unlocked: true
+				unlocked: true,
 			},
 			{
 				id: 'pip',
 				name: 'Pip',
 				classificationId: 'star',
 				orbitsId: 'maw',
-				unlocked: true
+				unlocked: true,
 			},
 			{
 				id: 'rath',
 				name: 'Rath',
 				classificationId: 'planet',
 				orbitsId: 'pip',
-				unlocked: true
+				unlocked: true,
 			},
 			{
 				id: 'nib',
 				name: 'Nib',
 				classificationId: 'moon',
 				orbitsId: 'rath',
-				unlocked: true
+				unlocked: true,
 			},
 			{
 				id: 'fuzz',
 				name: 'Fuzz',
 				orbitsId: 'pip',
 				unlocked: true,
-				classificationId: 'planet'
+				classificationId: 'planet',
 			},
 			{
 				id: 'gnaw',
 				name: 'Gnaw',
-				classificationId: 'planet'
+				classificationId: 'planet',
 			},
 			{
 				id: 'squeak',
 				name: 'Squeak',
-				classificationId: 'planet'
-			}
+				classificationId: 'planet',
+			},
 		],
 		location: [
 			{
 				id: 'rath_forest',
 				name: 'Forest',
 				unlocked: true,
-				celestialBodyId: 'rath'
-			}
-		]
+				celestialBodyId: 'rath',
+			},
+		],
 	},
 	links: [
 		{
@@ -152,8 +155,8 @@ export const data: ModConfig = {
 			coefficient: 1,
 			metadata: {
 				label: 'Foraging Zones',
-				description: 'Each Foraging Zone produces 1 grain per second'
-			}
+				description: 'Each Foraging Zone produces 1 grain per second',
+			},
 		},
 		{
 			from: 'granary_amount',
@@ -162,8 +165,8 @@ export const data: ModConfig = {
 			coefficient: 50,
 			metadata: {
 				label: 'Granaries',
-				description: 'Each Granary increases grain storage by 50'
-			}
-		}
-	]
+				description: 'Each Granary increases grain storage by 50',
+			},
+		},
+	],
 };

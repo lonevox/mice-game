@@ -2,19 +2,20 @@
 	import { LocationService } from '$lib/base_game/data_components/location';
 	import Building from '$lib/components/Building.svelte';
 	import { BuildingService } from '$lib/base_game/data_components/building';
-	import {
-		CelestialBodyService,
-		type CelestialBody
-	} from '$lib/base_game/data_components/celestialBody';
+	import { CelestialBodyService, type CelestialBody } from '$lib/base_game/data_components/celestialBody';
 	import Breadcrumb from '$lib/components/Breadcrumb.svelte';
+	import { useGame } from '$lib/core/gameContext';
 
-	const unlockedCelestialBodies = $derived(CelestialBodyService.getUnlocked());
+	const game = useGame();
+	const unlockedCelestialBodies = $derived(CelestialBodyService.getUnlocked(game.registry));
 
 	function findInitialBody(): CelestialBody | undefined {
-		const initialLocation = LocationService.getUnlocked().find((location) =>
-			unlockedCelestialBodies.some((body) => body.id === location.celestialBody.id)
+		const initialLocation = LocationService.getUnlocked(game.registry).find((location) =>
+			unlockedCelestialBodies.some((body) => body.id === location.celestialBodyId),
 		);
-		return initialLocation?.celestialBody ?? unlockedCelestialBodies[0];
+		return initialLocation
+			? game.registry.get('celestialBody', initialLocation.celestialBodyId)
+			: unlockedCelestialBodies[0];
 	}
 
 	let selectedCelestialBody = $state<CelestialBody | undefined>(findInitialBody());
@@ -25,31 +26,31 @@
 
 		const unlockedBodyIds = new Set(unlockedCelestialBodies.map((body) => body.id));
 		const chain: CelestialBody[] = [selectedCelestialBody];
-		let current = selectedCelestialBody.orbits;
+		let current = CelestialBodyService.getParent(game.registry, selectedCelestialBody);
 
 		while (current && unlockedBodyIds.has(current.id)) {
 			chain.unshift(current);
-			current = current.orbits;
+			current = CelestialBodyService.getParent(game.registry, current);
 		}
 
 		return chain;
 	});
 
 	const breadcrumbs = $derived(
-		breadcrumbChain.map((body) => `${body.name} ${body.classification.symbol}`)
+		breadcrumbChain.map((body) => `${body.name} ${CelestialBodyService.getClassification(game.registry, body).symbol}`),
 	);
 
 	// Find celestial bodies that orbit the selected body (children)
 	const childCelestialBodies = $derived.by(() => {
 		if (!selectedCelestialBody) return [];
 
-		return unlockedCelestialBodies.filter((body) => body.orbits?.id === selectedCelestialBody?.id);
+		return CelestialBodyService.getChildren(game.registry, selectedCelestialBody);
 	});
 
 	const selectedLocations = $derived.by(() => {
 		if (!selectedCelestialBody) return [];
-		return LocationService.getUnlocked().filter(
-			(location) => location.celestialBody?.id === selectedCelestialBody?.id
+		return LocationService.getUnlocked(game.registry).filter(
+			(location) => location.celestialBodyId === selectedCelestialBody?.id,
 		);
 	});
 
@@ -73,7 +74,7 @@
 				<li>
 					<button class="btn variant-soft-surface" onclick={() => navigateToChild(child)}>
 						{child.name}
-						{child.classification.symbol}
+						{CelestialBodyService.getClassification(game.registry, child).symbol}
 					</button>
 				</li>
 			{/each}
@@ -81,7 +82,7 @@
 	{/if}
 
 	{#each selectedLocations as location (location.id)}
-		{@const buildings = BuildingService.getUnlockedAt(location)}
+		{@const buildings = BuildingService.getUnlockedAt(game.registry, location)}
 		<div>
 			<h4 class="h4 ml-2 mb-2">{location.name}</h4>
 			{#if buildings.length > 0}
