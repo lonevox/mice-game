@@ -21,12 +21,15 @@
 		<AppBar.Trail class="space-x-2!">
 			<ThemeButton />
 			<!-- external links -->
-			<a class="btn py-2 hover:preset-tonal" href="https://github.com/lonevox/mice-game"
-				 target="_blank" rel="noreferrer">
+			<a
+				class="btn py-2 hover:preset-tonal"
+				href="https://github.com/lonevox/mice-game"
+				target="_blank"
+				rel="noreferrer"
+			>
 				<Fa6BrandsGithub />
 			</a>
-			<a class="btn py-2 hover:preset-tonal" href="https://discord.gg/sgC9JjRer4" target="_blank"
-				 rel="noreferrer">
+			<a class="btn py-2 hover:preset-tonal" href="https://discord.gg/sgC9JjRer4" target="_blank" rel="noreferrer">
 				<Fa6BrandsDiscord />
 			</a>
 		</AppBar.Trail>

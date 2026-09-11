@@ -13,12 +13,12 @@ export function formatDecimal(input: number, decimalPlaces: number = 2): string 
 
 export function formatPerSecondNumber(input: number): string {
 	if (input > 0) {
-		return "+" + formatDecimal(input) + "/s";
+		return '+' + formatDecimal(input) + '/s';
 	}
 	if (input < 0) {
-		return formatDecimal(input) + "/s";
+		return formatDecimal(input) + '/s';
 	}
-	return "";
+	return '';
 }
 
 /**
@@ -33,12 +33,12 @@ export function formatPerSecondNumber(input: number): string {
 export function formatRatioAsPercentageChanged(ratio: number): string {
 	const percentageChange = (ratio - 1) * 100;
 	if (percentageChange > 0) {
-		return "+" + percentageChange.toFixed(0) + "%";
+		return '+' + percentageChange.toFixed(0) + '%';
 	}
 	if (percentageChange < 0) {
-		return percentageChange.toFixed(0) + "%";
+		return percentageChange.toFixed(0) + '%';
 	}
-	return "";
+	return '';
 }
 
 /**
@@ -51,27 +51,27 @@ export function formatRatioAsPercentageChanged(ratio: number): string {
  * @param seconds The number to format.
  */
 export function formatTimeLeft(seconds: number): string {
-		if (seconds === Infinity || isNaN(seconds)) {
-			return "";
-		}
-		const d = Math.floor(seconds / (3600 * 24));
-		const h = Math.floor(seconds % (3600 * 24) / 3600);
-		const m = Math.floor(seconds % 3600 / 60);
-		const s = seconds % 60;
-		let out = "";
-		if (d !== 0) {
-			out += d + "d ";
-		}
-		if (h !== 0) {
-			out += h + "h ";
-		}
-		if (m !== 0) {
-			out += m + "m ";
-		}
-		if (m === 0 && s < 10) {
-			return out + formatDecimal(s, 1) + "s";
-		}
-		return out + Math.floor(s) + "s";
+	if (seconds === Infinity || isNaN(seconds)) {
+		return '';
+	}
+	const d = Math.floor(seconds / (3600 * 24));
+	const h = Math.floor((seconds % (3600 * 24)) / 3600);
+	const m = Math.floor((seconds % 3600) / 60);
+	const s = seconds % 60;
+	let out = '';
+	if (d !== 0) {
+		out += d + 'd ';
+	}
+	if (h !== 0) {
+		out += h + 'h ';
+	}
+	if (m !== 0) {
+		out += m + 'm ';
+	}
+	if (m === 0 && s < 10) {
+		return out + formatDecimal(s, 1) + 's';
+	}
+	return out + Math.floor(s) + 's';
 }
 
 /**

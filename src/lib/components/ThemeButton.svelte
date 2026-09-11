@@ -36,7 +36,8 @@
 	<Portal>
 		<Popover.Positioner>
 			<Popover.Content
-				class="card p-4 bg-surface-50-950 border border-surface-200-800 p-2 space-y-4 shadow-xl max-h-[75vh] lg:max-h-none overflow-y-auto z-50">
+				class="card p-4 bg-surface-50-950 border border-surface-200-800 p-2 space-y-4 shadow-xl max-h-[75vh] lg:max-h-none overflow-y-auto z-50"
+			>
 				<!-- Mode Selection -->
 				<div>
 					<SegmentedControl
@@ -77,9 +78,9 @@
 							<button
 								data-theme={theme.name}
 								class="bg-surface-50-950 p-3 preset-outlined-surface-100-900 hover:preset-outlined-surface-950-50 rounded-md grid grid-cols-[auto_1fr_auto] items-center gap-4 {activeTheme ===
-											theme.name
-												? 'preset-outlined-surface-500'
-												: ''}"
+								theme.name
+									? 'preset-outlined-surface-500'
+									: ''}"
 								onclick={() => setActiveTheme(theme.name)}
 							>
 								<span>{theme.emoji}</span>

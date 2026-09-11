@@ -7,13 +7,13 @@ const config = {
 	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
 	preprocess: [vitePreprocess()],
-	
+
 	vitePlugin: {
 		inspector: true,
 		// Compile this project in runes mode, but exclude libraries.
-		dynamicCompileOptions({filename}) {
-			if(!filename.includes('node_modules')) {
-				return { runes: true }
+		dynamicCompileOptions({ filename }) {
+			if (!filename.includes('node_modules')) {
+				return { runes: true };
 			}
 		},
 	},
@@ -22,11 +22,11 @@ const config = {
 		// If your environment is not supported or you settled on a specific environment, switch out the adapter.
 		// See https://kit.svelte.dev/docs/adapters for more information about adapters.
 		adapter: adapter({
-			fallback: '404.html'
+			fallback: '404.html',
 		}),
 		paths: {
-			base: process.argv.includes('dev') ? '' : '/mice-game'
-		}
-	}
+			base: process.argv.includes('dev') ? '' : '/mice-game',
+		},
+	},
 };
 export default config;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	let {
 		breadcrumbs,
-		onNavigate
+		onNavigate,
 	}: {
 		breadcrumbs: string[];
 		onNavigate?: (index: number) => void;
@@ -9,7 +9,7 @@
 </script>
 
 <ol class="flex items-center gap-2 overflow-x-auto whitespace-nowrap">
-	{#each breadcrumbs as crumb, i}
+	{#each breadcrumbs as crumb, i (i)}
 		{#if i > 0}
 			<li class="shrink-0 opacity-50" aria-hidden="true">&gt;</li>
 		{/if}
