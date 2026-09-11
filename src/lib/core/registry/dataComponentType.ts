@@ -33,7 +33,7 @@ export function getTypeDependencies(
 
 export function getTypeService(
 	type: keyof DataComponentTypeRegistry
-): { create: (config: any) => any } | undefined {
+): { create: (config: any) => any; finalize?: () => void } | undefined {
 	return typeMetadata.get(type)?.service;
 }
 

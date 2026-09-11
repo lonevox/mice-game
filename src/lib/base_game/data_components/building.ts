@@ -1,6 +1,7 @@
-import { type Resource } from './resource.js';
-import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent.js';
-import { ReactiveProperty } from '$lib/core/registry/reactiveRegistry.svelte.js';
+import { type Resource } from './resource';
+import { type Location } from './location';
+import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent';
+import { ReactiveProperty } from '$lib/core/registry/reactiveRegistry.svelte';
 
 export interface BuildingCost {
 	resource: Resource;
@@ -16,6 +17,8 @@ export interface Building extends DataComponent {
 	description?: string;
 	icon?: string;
 	basePrice: BuildingCost[];
+	location: Location;
+	unlocked: boolean;
 
 	amount: ReactiveProperty;
 	priceMultiplier: ReactiveProperty;
@@ -28,8 +31,10 @@ export interface BuildingConfig {
 	description?: string;
 	icon?: string;
 	basePrice: BuildingCostConfig[];
-	basePriceScale?: number;
+	locationId: string;
+	unlocked?: boolean;
 	baseAmount?: number;
+	basePriceScale?: number;
 }
 
 declare module '$lib/core/registry/dataComponentType' {
@@ -55,12 +60,21 @@ export class BuildingService {
 			})
 			.filter((cost): cost is BuildingCost => cost !== null);
 
+		const location = dataComponentRegistry.get('location', config.locationId);
+		if (!location) {
+			throw new Error(
+				`Error creating Building: '${config.locationId}' is not a valid Location ID.`
+			);
+		}
+
 		const building: Building = {
 			id: config.id,
 			name: config.name,
 			description: config.description,
 			icon: config.icon ?? '',
 			basePrice,
+			location,
+			unlocked: config.unlocked ?? false,
 			amount: dataComponentRegistry.createProperty(`${config.id}_amount`, config.baseAmount ?? 0),
 			priceMultiplier: dataComponentRegistry.createProperty(`${config.id}_price_multiplier`, 1),
 			priceScale: dataComponentRegistry.createProperty(
@@ -74,6 +88,14 @@ export class BuildingService {
 
 	static getAll(): Building[] {
 		return dataComponentRegistry.getAll('building');
+	}
+
+	static getUnlocked(): Building[] {
+		return this.getAll().filter((building) => building.unlocked);
+	}
+
+	static getUnlockedAt(location: Location): Building[] {
+		return this.getUnlocked().filter((building) => building.location.id === location.id);
 	}
 
 	static buy(building: Building): boolean {

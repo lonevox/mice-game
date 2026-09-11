@@ -2,6 +2,7 @@ import type { ModConfig } from '$lib/core/mod';
 import { ResourceService } from '$lib/base_game/data_components/resource';
 import { BuildingService } from '$lib/base_game/data_components/building';
 import { LocationService } from '$lib/base_game/data_components/location';
+import { CelestialBodyService } from '$lib/base_game/data_components/celestialBody';
 
 export const data: ModConfig = {
 	id: 'base_game',
@@ -14,13 +15,18 @@ export const data: ModConfig = {
 			service: ResourceService
 		},
 		building: {
-			dependencies: ['resource'],
+			dependencies: ['resource', 'location'],
 			service: BuildingService
 		},
 		location: {
-			dependencies: ['building'],
+			dependencies: ['celestialBody'],
 			service: LocationService
-		}
+		},
+		celestialBody: {
+			dependencies: ['celestialBodyClassification'],
+			service: CelestialBodyService
+		},
+		celestialBodyClassification: {}
 	},
 	dataComponents: {
 		rarity: [
@@ -40,10 +46,21 @@ export const data: ModConfig = {
 		],
 		building: [
 			{
+				id: 'burrow',
+				name: 'Burrow',
+				description: 'A cozy home for mice',
+				basePrice: [{ resourceId: 'wood', amount: 40 }],
+				locationId: 'rath_forest',
+				unlocked: true,
+				basePriceScale: 1.5,
+				icon: '🕳️'
+			},
+			{
 				id: 'foraging_zone',
 				name: 'Foraging Zone',
 				description: 'Mice gather grain from the wild',
 				basePrice: [{ resourceId: 'grain', amount: 10 }],
+				locationId: 'rath_forest',
 				basePriceScale: 1.15,
 				icon: '🌿'
 			},
@@ -52,13 +69,79 @@ export const data: ModConfig = {
 				name: 'Granary',
 				description: 'Increases grain storage capacity',
 				basePrice: [{ resourceId: 'wood', amount: 50 }],
+				locationId: 'rath_forest',
 				basePriceScale: 1.2,
 				icon: '🏠'
+			},
+			{
+				id: 'launchpad',
+				name: 'Launchpad',
+				description: 'Allows you to go to space',
+				basePrice: [{ resourceId: 'grain', amount: 40 }],
+				locationId: 'rath_forest',
+				basePriceScale: 1.2,
+				icon: '🚀'
+			}
+		],
+		celestialBodyClassification: [
+			{ id: 'moon', name: 'Moon', symbol: '⏾' },
+			{ id: 'planet', name: 'Planet', symbol: '⬤' },
+			{ id: 'star', name: 'Star', symbol: '✸' },
+			{ id: 'black_hole', name: 'Black Hole', symbol: '𖦹' }
+		],
+		celestialBody: [
+			{
+				id: 'maw',
+				name: 'Maw',
+				classificationId: 'black_hole',
+				unlocked: true
+			},
+			{
+				id: 'pip',
+				name: 'Pip',
+				classificationId: 'star',
+				orbitsId: 'maw',
+				unlocked: true
+			},
+			{
+				id: 'rath',
+				name: 'Rath',
+				classificationId: 'planet',
+				orbitsId: 'pip',
+				unlocked: true
+			},
+			{
+				id: 'nib',
+				name: 'Nib',
+				classificationId: 'moon',
+				orbitsId: 'rath',
+				unlocked: true
+			},
+			{
+				id: 'fuzz',
+				name: 'Fuzz',
+				orbitsId: 'pip',
+				unlocked: true,
+				classificationId: 'planet'
+			},
+			{
+				id: 'gnaw',
+				name: 'Gnaw',
+				classificationId: 'planet'
+			},
+			{
+				id: 'squeak',
+				name: 'Squeak',
+				classificationId: 'planet'
 			}
 		],
 		location: [
-			{ id: 'rath', name: 'Rath', unlocked: true, buildingIds: ['foraging_zone', 'granary'] },
-			{ id: 'nib', name: 'Nib', unlocked: false, buildingIds: [] }
+			{
+				id: 'rath_forest',
+				name: 'Forest',
+				unlocked: true,
+				celestialBodyId: 'rath'
+			}
 		]
 	},
 	links: [

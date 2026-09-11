@@ -6,6 +6,7 @@ export type DataComponentTypeDefinition = {
 	dependencies?: (keyof DataComponentRegistry)[];
 	service?: {
 		create: (config: any) => any;
+		finalize?: () => void;
 	};
 };
 

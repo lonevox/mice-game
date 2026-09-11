@@ -27,7 +27,7 @@
 	<div class="basis-1/2">
 		<Tabs defaultValue="tab1">
 			<Tabs.List>
-				<Tabs.Trigger value="tab1">Field</Tabs.Trigger>
+				<Tabs.Trigger value="tab1">Location</Tabs.Trigger>
 				<Tabs.Trigger value="tab2">Society</Tabs.Trigger>
 				<Tabs.Indicator />
 			</Tabs.List>

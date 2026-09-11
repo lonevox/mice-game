@@ -97,6 +97,7 @@ export class ModLoader {
 							dataComponentRegistry.register(type, (config as any).id, config as any);
 						}
 					}
+					service?.finalize?.();
 				}
 			}
 		}

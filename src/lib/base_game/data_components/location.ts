@@ -1,16 +1,16 @@
-import type { Building } from '$lib/base_game/data_components/building.js';
 import { type DataComponent, dataComponentRegistry } from '$lib/core/registry/dataComponent';
+import type { CelestialBody } from '$lib/base_game/data_components/celestialBody';
 
 export interface Location extends DataComponent {
 	unlocked: boolean;
-	buildings: Building[];
+	celestialBody: CelestialBody;
 }
 
 export interface LocationConfig {
 	id: string;
 	name: string;
 	unlocked?: boolean;
-	buildingIds?: string[];
+	celestialBodyId: string;
 }
 
 declare module '$lib/core/registry/dataComponentType' {
@@ -24,16 +24,18 @@ declare module '$lib/core/registry/dataComponentType' {
 
 export class LocationService {
 	static create(config: LocationConfig): Location {
-		// Resolve building IDs to actual Building instances
-		const buildings: Building[] = (config.buildingIds ?? [])
-			.map((id) => dataComponentRegistry.get('building', id))
-			.filter((b): b is Building => b !== undefined);
+		const celestialBody = dataComponentRegistry.get('celestialBody', config.celestialBodyId);
+		if (!celestialBody) {
+			throw new Error(
+				`Error creating Location: '${config.celestialBodyId}' is not a valid Celestial Body ID.`
+			);
+		}
 
 		const location: Location = {
 			id: config.id,
 			name: config.name,
 			unlocked: config.unlocked ?? false,
-			buildings
+			celestialBody
 		};
 		dataComponentRegistry.register('location', location.id, location);
 		return location;
@@ -44,6 +46,6 @@ export class LocationService {
 	}
 
 	static getUnlocked(): Location[] {
-		return this.getAll().filter((loc) => loc.unlocked);
+		return this.getAll().filter((location) => location.unlocked);
 	}
 }
