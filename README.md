@@ -7,9 +7,10 @@ You can play the latest build of the game [here](https://lonevox.github.io/mice-
 
 ## Overview
 
-*You are a mouse in a field of grain.* From here, you must expand into a mouse empire and conquer the stars.
+_You are a mouse in a field of grain._ From here, you must expand into a mouse empire and conquer the stars.
 
 Mouse Game is a web incremental game with maximum complexity and minimal fluff (besides the mice, they're fluffy!). The key gameplay components are:
+
 - Resources. Everything you have is a reource, including your Mice!
 - Buildings. These consume resources to build, but many buildings can produce resources in return. Some buildings may improve the effect of other buildings, or increase your resource storage, or modify mechanics, etc.
 - Upgrades. The concrete accomplishments of your mouse empire. Upgrades modify any and every mechanic in the game. They are also the primary way that new mechanics are introduced.
@@ -20,12 +21,11 @@ The gameplay components are simple, but complexity emerges when everything inter
 
 ![image](https://github.com/user-attachments/assets/a8af8544-bc88-482c-ab35-6509340265b8)
 
-
 ## Is this game just a copy of Kittens Game?
 
 This project is heavily inspired by [Kittens Game](https://kittensgame.com), even down to the name. It's my excuse to learn Svelte 5 and its new reactivity features, being that a Kittens-like game leads itself heavily to reactivity. The design of the mechanics in Kittens Game is amazing. You have buildings, resources, and upgrades, all of which can interact with each other in various ways. The mechanics are simple, but the design space is huge. Mice Game is made with this in mind, with a focus on making it easy to create interactions between different game systems.
 
-It's worth noting that Mice Game does not use any code from Kittens Game, as that would be against their [license](https://bitbucket.org/bloodrizer/kitten-game/src/master/license.txt), specifically the line *"Using the game code for commercial gain or creation of derivative works is not permitted."* I consider this to disallow not only copying but *viewing* their code before making changes to Mice Game (see [contributing](https://github.com/lonevox/mice-game/blob/main/CONTRIBUTING.md)).
+It's worth noting that Mice Game does not use any code from Kittens Game, as that would be against their [license](https://bitbucket.org/bloodrizer/kitten-game/src/master/license.txt), specifically the line _"Using the game code for commercial gain or creation of derivative works is not permitted."_ I consider this to disallow not only copying but _viewing_ their code before making changes to Mice Game (see [contributing](https://github.com/lonevox/mice-game/blob/main/CONTRIBUTING.md)).
 
 ### How is Mice Game different from Kittens Game?
 
