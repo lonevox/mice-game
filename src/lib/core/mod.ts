@@ -2,6 +2,7 @@ import type { DataComponentRegistry, DataComponentRegistryImpl } from '$lib/core
 import type { Link } from '$lib/core/types';
 import type { DataComponentConfigRegistry } from '$lib/core/registry/dataComponentType';
 import type { GameSystem } from '$lib/core/system';
+import type { UiInjection } from '$lib/core/ui';
 
 export type DataComponentTypeDefinition<K extends keyof DataComponentRegistry = keyof DataComponentRegistry> = {
 	dependencies?: (keyof DataComponentRegistry)[];
@@ -46,6 +47,8 @@ export type ModConfig = {
 	};
 	/** Runtime systems contributed by this mod. */
 	systems?: GameSystem[];
+	/** Svelte components to mount into elements selected from the rendered page. */
+	ui?: UiInjection[];
 	/**
 	 * Contains all Links that the mod declares. These links don't need to be between DataComponents
 	 * of the mod; they can be between DataComponents of any mod.

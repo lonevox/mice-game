@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { LocationService } from '$lib/base_game/data_components/location';
-	import Building from '$lib/components/Building.svelte';
+	import Building from '$lib/base_game/components/Building.svelte';
 	import { BuildingService } from '$lib/base_game/data_components/building';
 	import { CelestialBodyService, type CelestialBody } from '$lib/base_game/data_components/celestialBody';
 	import Breadcrumb from '$lib/components/Breadcrumb.svelte';

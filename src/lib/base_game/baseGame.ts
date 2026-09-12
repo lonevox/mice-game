@@ -3,6 +3,7 @@ import { ResourceService, resourceProductionSystem } from '$lib/base_game/data_c
 import { BuildingService } from '$lib/base_game/data_components/building';
 import { LocationService } from '$lib/base_game/data_components/location';
 import { CelestialBodyService } from '$lib/base_game/data_components/celestialBody';
+import BaseGame from '$lib/base_game/components/BaseGame.svelte';
 
 export const data: ModConfig = {
 	id: 'base_game',
@@ -10,6 +11,7 @@ export const data: ModConfig = {
 	description: 'The core content for Mice Game',
 	dependencies: [],
 	systems: [resourceProductionSystem],
+	ui: [{ id: 'base_game.layout', target: '#game-body', component: BaseGame }],
 	dataComponentTypes: {
 		rarity: {},
 		resource: {

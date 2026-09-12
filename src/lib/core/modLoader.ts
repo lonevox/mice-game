@@ -3,12 +3,14 @@ import { DataComponentRegistryImpl } from './registry/dataComponent';
 import type { DataComponentTypeDefinition, ModConfig } from './mod';
 import { DataComponentTypeCatalog } from './registry/dataComponentType';
 import type { GameSystem } from './system';
+import type { UiInjection } from './ui';
 import { topologicalSort } from './util/topologicalSort';
 
 /** Loads a batch atomically using declare, create, validate, and activate phases. */
 export class ModLoader {
 	private loadedMods = new Map<string, ModConfig>();
 	private systems = new Map<string, GameSystem>();
+	private uiInjections = new Map<string, UiInjection>();
 
 	constructor(
 		private registry: DataComponentRegistryImpl,
@@ -47,6 +49,7 @@ export class ModLoader {
 		);
 
 		this.validateSystems(sortedMods);
+		this.validateUiInjections(sortedMods);
 		const registryCheckpoint = this.registry.checkpoint();
 		const typeCheckpoint = this.typeCatalog.checkpoint();
 
@@ -63,6 +66,7 @@ export class ModLoader {
 
 			for (const mod of sortedMods) {
 				for (const system of mod.systems ?? []) this.systems.set(system.id, system);
+				for (const injection of mod.ui ?? []) this.uiInjections.set(injection.id, injection);
 				this.loadedMods.set(mod.id, mod);
 				console.log(`Loaded mod: ${mod.name} (${mod.id})`);
 			}
@@ -89,6 +93,23 @@ export class ModLoader {
 				if (!system.id) throw new Error(`Mod "${mod.id}" contains a system without an ID.`);
 				if (ids.has(system.id)) throw new Error(`Duplicate game system ID: "${system.id}".`);
 				ids.add(system.id);
+			}
+		}
+	}
+
+	private validateUiInjections(mods: ModConfig[]): void {
+		const ids = new Set(this.uiInjections.keys());
+		for (const mod of mods) {
+			for (const injection of mod.ui ?? []) {
+				if (!injection.id) throw new Error(`Mod "${mod.id}" contains a UI injection without an ID.`);
+				if (ids.has(injection.id)) throw new Error(`Duplicate UI injection ID: "${injection.id}".`);
+				if (!injection.target.trim()) {
+					throw new Error(`UI injection "${injection.id}" does not have a target selector.`);
+				}
+				if (typeof injection.component !== 'function') {
+					throw new Error(`UI injection "${injection.id}" does not provide a Svelte component.`);
+				}
+				ids.add(injection.id);
 			}
 		}
 	}
@@ -191,5 +212,9 @@ export class ModLoader {
 
 	getSystems(): GameSystem[] {
 		return Array.from(this.systems.values());
+	}
+
+	getUiInjections(): UiInjection[] {
+		return Array.from(this.uiInjections.values());
 	}
 }

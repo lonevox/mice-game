@@ -14,6 +14,10 @@ try {
 	assert.equal(game.registry.get('location', 'rath_forest')?.celestialBodyId, 'rath');
 	assert.equal(game.registry.count('building'), 4);
 	assert.equal(game.modLoader.getSystems().length, 1);
+	assert.deepEqual(
+		game.modLoader.getUiInjections().map(({ id, target }) => ({ id, target })),
+		[{ id: 'base_game.layout', target: '#game-body' }],
+	);
 
 	game.loadMods([baseGame]);
 	assert.equal(game.registry.count('building'), 4, 'loading the same mod should be idempotent');
@@ -32,6 +36,38 @@ try {
 	};
 	game.loadMods([orderedIndependently]);
 	assert.equal(game.registry.get('celestialBody', 'test_child')?.orbitsId, 'test_parent');
+
+	const TestComponent = () => {};
+	const uiDependency = {
+		id: 'test_ui_dependency',
+		name: 'UI Dependency Test',
+		dependencies: ['base_game'],
+		ui: [{ id: 'test_ui.dependency', target: '.dependency-target', component: TestComponent }],
+	};
+	const uiDependent = {
+		id: 'test_ui_dependent',
+		name: 'UI Dependent Test',
+		dependencies: ['test_ui_dependency'],
+		ui: [{ id: 'test_ui.dependent', target: '.dependent-target', component: TestComponent }],
+	};
+	game.loadMods([uiDependent, uiDependency]);
+	assert.deepEqual(
+		game.modLoader
+			.getUiInjections()
+			.slice(-2)
+			.map(({ id }) => id),
+		['test_ui.dependency', 'test_ui.dependent'],
+		'UI injections should follow dependency order',
+	);
+
+	const duplicateUiMod = {
+		id: 'test_duplicate_ui',
+		name: 'Duplicate UI Test',
+		dependencies: ['base_game'],
+		ui: [{ id: 'base_game.layout', target: '#somewhere-else', component: TestComponent }],
+	};
+	assert.throws(() => game.loadMods([duplicateUiMod]), /Duplicate UI injection ID/);
+	assert.equal(game.modLoader.isLoaded(duplicateUiMod.id), false);
 
 	const countBeforeInvalidMod = game.registry.count('celestialBody');
 	const invalidMod = {
